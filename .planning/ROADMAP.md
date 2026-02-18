@@ -35,12 +35,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. `DataModule.setup()` on the basketball jersey numbers dataset produces train/val/test `DataLoader` instances with no augmentation on val/test — verified by inspecting transform pipelines in tests
   5. `labels_mapping.json` is written to disk after `DataModule.setup()` and contains the correct alphabetically-ordered `class_to_idx` mapping for all 43 classes
 
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: Project scaffold — pixi.toml, pyproject.toml, src layout, pre-commit, ruff, mypy
-- [ ] 01-02: Core types and utilities — Pydantic frozen models, loguru logging, reproducibility seed
-- [ ] 01-03: ImageFolderDataModule — train/val/test splits, JSONL annotation support, transforms, WeightedRandomSampler, class weights, labels_mapping.json
+- [ ] 01-01-PLAN.md — Project scaffold: pixi.toml, pyproject.toml, src layout, pre-commit, ruff, mypy
+- [ ] 01-02-PLAN.md — Core types and configuration: DataModuleConfig pydantic model, ClassificationBatch TypedDict, test conftest fixtures
+- [ ] 01-03-PLAN.md — ImageFolderDataModule: JerseyNumberDataset, JSONL parsing, transforms, WeightedRandomSampler, labels_mapping.json
 
 ### Phase 2: Model Layer
 
@@ -175,4 +175,4 @@ Each phase is a strict dependency of the next. The import graph enforces this or
 
 ---
 *Roadmap created: 2026-02-18*
-*Last updated: 2026-02-18 — initial creation*
+*Last updated: 2026-02-18 — Phase 1 plans created (01-01, 01-02, 01-03)*
