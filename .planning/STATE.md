@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 ## Current Position
 
 Phase: 1 of 5 (Foundation and Data Pipeline)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-18 — Plan 01-01 complete: project scaffold (pixi + flit_core + ruff + mypy + pre-commit + pytest)
+Last activity: 2026-02-18 — Plan 01-02 complete: DataModuleConfig, ClassificationBatch, conftest fixture, 7 unit tests
 
-Progress: [█░░░░░░░░░] 7%
+Progress: [██░░░░░░░░] 13%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 3 min
-- Total execution time: 0.05 hours
+- Total plans completed: 2
+- Average duration: 3.5 min
+- Total execution time: 0.12 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation-and-data-pipeline | 1/3 | 3 min | 3 min |
+| 01-foundation-and-data-pipeline | 2/3 | 7 min | 3.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min)
-- Trend: -
+- Last 5 plans: 01-01 (3 min), 01-02 (4 min)
+- Trend: stable
 
 *Updated after each plan completion*
 
@@ -49,6 +49,11 @@ Recent decisions affecting current work:
 - [01-01]: flit_core build backend (matching sibling repo convention)
 - [01-01]: `environments.default = ["dev"]` ensures dev tooling always available without separate env activation
 - [01-01]: pytest 9 exits 5 on no tests collected — added smoke test (test_package.py) to satisfy `pixi run test` exits 0 success criterion
+- [01-02]: TypedDict chosen for ClassificationBatch — Lightning training_step receives dict batches; Model unpacks batch["images"], batch["labels"]
+- [01-02]: persistent_workers auto-correction uses object.__setattr__ inside model_validator (required for frozen pydantic models)
+- [01-02]: MPS num_workers guard deferred to DataModule — config is a pure data model with no runtime torch access
+- [01-02]: tmp_dataset_dir uses flat files + JSONL (not ImageFolder subdirs) — mirrors real basketball-jersey-numbers-ocr dataset structure
+- [01-02]: Test path strings use /data/test instead of /tmp/data to avoid ruff S108 false positives
 
 ### Pending Todos
 
@@ -63,5 +68,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 01-01-PLAN.md — project scaffold complete
+Stopped at: Completed 01-02-PLAN.md — DataModuleConfig, ClassificationBatch, conftest fixture, 7 unit tests
 Resume file: None
