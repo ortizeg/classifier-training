@@ -1,0 +1,40 @@
+[workspace]
+name = "classifier-training"
+version = "0.1.0"
+description = "Basketball jersey number classifier training"
+authors = ["Enrique G. Ortiz <ortizeg@gmail.com>"]
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "linux-64"]
+
+[tasks]
+test = "pytest"
+test-cov = "pytest --cov=src --cov-report=term --cov-report=xml -v"
+lint = "ruff check ."
+format = "ruff format ."
+format-check = "ruff format --check ."
+typecheck = "mypy src/"
+precommit = "pre-commit run --all-files"
+
+[dependencies]
+python = "3.11.*"
+lightning = "*"
+loguru = "*"
+numpy = "<2.0.0"
+pydantic = ">=2.0"
+pytorch = "*"
+torchvision = "*"
+pillow = "*"
+rich = "*"
+
+[feature.dev.dependencies]
+pytest = "*"
+pytest-cov = "*"
+ruff = "*"
+mypy = "*"
+pre-commit = "*"
+
+[environments]
+default = ["dev"]
+
+[pypi-dependencies]
+classifier-training = { path = ".", editable = true }
