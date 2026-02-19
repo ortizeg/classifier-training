@@ -5,5 +5,7 @@ num_workers: 4
 pin_memory: true
 persistent_workers: true
 image_size: 224
+use_cache: true
+cache_type: ram
 sampler:
   mode: disabled

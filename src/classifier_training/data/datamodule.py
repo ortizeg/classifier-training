@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import v2
 
 from classifier_training.config import DataModuleConfig
+from classifier_training.data.cache_dataset import CacheDataset
 from classifier_training.data.dataset import JerseyNumberDataset
 from classifier_training.data.sampler import (
     SamplerConfig,
@@ -65,6 +66,8 @@ class ImageFolderDataModule(L.LightningDataModule):
         val_transforms: v2.Compose | None = None,
         test_transforms: v2.Compose | None = None,
         sampler: dict[str, Any] | None = None,
+        use_cache: bool = False,
+        cache_type: str = "ram",
         **kwargs: Any,
     ) -> None:
         super().__init__()
@@ -83,6 +86,10 @@ class ImageFolderDataModule(L.LightningDataModule):
 
         # Parse sampler config from dict (Hydra passes dicts)
         self._sampler_config = SamplerConfig(**(sampler or {}))
+
+        # Cache config — pre-loads decoded images for faster training
+        self._use_cache = use_cache
+        self._cache_type = cache_type
 
         # Optional pre-built transform pipelines (from Hydra config).
         # When provided, these override the internal _build_*_transforms() methods.
@@ -109,9 +116,9 @@ class ImageFolderDataModule(L.LightningDataModule):
         self._image_size = self._config.image_size
 
         self._class_to_idx: dict[str, int] | None = None
-        self._train_dataset: JerseyNumberDataset | None = None
-        self._val_dataset: JerseyNumberDataset | None = None
-        self._test_dataset: JerseyNumberDataset | None = None
+        self._train_dataset: JerseyNumberDataset | CacheDataset | None = None
+        self._val_dataset: JerseyNumberDataset | CacheDataset | None = None
+        self._test_dataset: JerseyNumberDataset | CacheDataset | None = None
 
     # ------------------------------------------------------------------
     # Class mapping — built from train only, alphabetical, deterministic
@@ -211,30 +218,62 @@ class ImageFolderDataModule(L.LightningDataModule):
                 self._external_train_transforms or self._build_train_transforms()
             )
             val_tfm = self._external_val_transforms or self._build_val_test_transforms()
-            self._train_dataset = JerseyNumberDataset(
+
+            train_raw = JerseyNumberDataset(
                 root=self._data_root / "train",
                 class_to_idx=self.class_to_idx,
                 transform=train_tfm,
             )
-            self._val_dataset = JerseyNumberDataset(
+            val_raw = JerseyNumberDataset(
                 root=self._data_root / "valid",
                 class_to_idx=self.class_to_idx,
                 transform=val_tfm,
             )
+
+            if self._use_cache:
+                # Cache pre-transform images; apply transforms after retrieval
+                train_raw.transform = None
+                self._train_dataset = CacheDataset(
+                    train_raw,
+                    cache_type=self._cache_type,  # type: ignore[arg-type]
+                    transforms=train_tfm,
+                )
+                val_raw.transform = None
+                self._val_dataset = CacheDataset(
+                    val_raw,
+                    cache_type=self._cache_type,  # type: ignore[arg-type]
+                    transforms=val_tfm,
+                )
+            else:
+                self._train_dataset = train_raw
+                self._val_dataset = val_raw
+
             logger.info(
                 f"Setup fit: train={len(self._train_dataset)}, "
                 f"val={len(self._val_dataset)} samples"
+                + (f" (cache={self._cache_type})" if self._use_cache else "")
             )
 
         if stage in ("test", None):
             test_tfm = (
                 self._external_test_transforms or self._build_val_test_transforms()
             )
-            self._test_dataset = JerseyNumberDataset(
+            test_raw = JerseyNumberDataset(
                 root=self._data_root / "test",
                 class_to_idx=self.class_to_idx,
                 transform=test_tfm,
             )
+
+            if self._use_cache:
+                test_raw.transform = None
+                self._test_dataset = CacheDataset(
+                    test_raw,
+                    cache_type=self._cache_type,  # type: ignore[arg-type]
+                    transforms=test_tfm,
+                )
+            else:
+                self._test_dataset = test_raw
+
             logger.info(f"Setup test: {len(self._test_dataset)} samples")
 
     # ------------------------------------------------------------------
