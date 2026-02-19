@@ -60,13 +60,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Training Configuration
 
-- [ ] **TRAIN-01**: Hydra hierarchical config with config groups: model, data, trainer, callbacks, transforms
-- [ ] **TRAIN-02**: Mixed precision training (`16-mixed`) for GPU optimization
-- [ ] **TRAIN-03**: Gradient clipping (`clip_val=1.0`) and gradient accumulation
-- [ ] **TRAIN-04**: Default trainer config optimized for T4 GPU (batch_size=64, num_workers=4)
-- [ ] **TRAIN-05**: WandB logging via WandbLogger
-- [ ] **TRAIN-06**: Basketball jersey numbers OCR dataset config for validation training run
-- [ ] **TRAIN-07**: ModelCheckpoint with fixed dirpath for resume stability
+- [x] **TRAIN-01**: Hydra hierarchical config with config groups: model, data, trainer, callbacks, transforms
+- [x] **TRAIN-02**: Mixed precision training (`16-mixed`) for GPU optimization
+- [x] **TRAIN-03**: Gradient clipping (`clip_val=1.0`) and gradient accumulation
+- [x] **TRAIN-04**: Default trainer config optimized for T4 GPU (batch_size=64, num_workers=4)
+- [x] **TRAIN-05**: WandB logging via WandbLogger
+- [x] **TRAIN-06**: Basketball jersey numbers OCR dataset config for validation training run
+- [x] **TRAIN-07**: ModelCheckpoint with fixed dirpath for resume stability
 
 ### Infrastructure
 
@@ -164,13 +164,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CALL-10 | Phase 3 | Complete |
 | CALL-11 | Phase 3 | Complete |
 | CALL-12 | Phase 3 | Complete |
-| TRAIN-01 | Phase 4 | Pending |
-| TRAIN-02 | Phase 4 | Pending |
-| TRAIN-03 | Phase 4 | Pending |
-| TRAIN-04 | Phase 4 | Pending |
-| TRAIN-05 | Phase 4 | Pending |
-| TRAIN-06 | Phase 4 | Pending |
-| TRAIN-07 | Phase 4 | Pending |
+| TRAIN-01 | Phase 4 | Complete |
+| TRAIN-02 | Phase 4 | Complete |
+| TRAIN-03 | Phase 4 | Complete |
+| TRAIN-04 | Phase 4 | Complete |
+| TRAIN-05 | Phase 4 | Complete |
+| TRAIN-06 | Phase 4 | Complete |
+| TRAIN-07 | Phase 4 | Complete |
 | INFRA-01 | Phase 5 | Pending |
 | INFRA-02 | Phase 5 | Pending |
 | INFRA-03 | Phase 5 | Pending |

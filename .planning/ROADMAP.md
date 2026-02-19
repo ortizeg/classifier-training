@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation and Data Pipeline** - Project scaffold, data module, transforms, class imbalance handling ✓ (2026-02-18)
 - [x] **Phase 2: Model Layer** - ResNet backbones, LightningModule, metrics, optimizer, scheduler ✓ (2026-02-18)
 - [x] **Phase 3: Callbacks and ONNX Export** - All callbacks including EMA, ONNX export, confusion matrix ✓ (2026-02-18)
-- [ ] **Phase 4: Training Configuration** - Hydra configs, WandB, trainer defaults, checkpoint resume
+- [x] **Phase 4: Training Configuration** - Hydra configs, WandB, trainer defaults, checkpoint resume ✓ (2026-02-18)
 - [ ] **Phase 5: Infrastructure** - Docker, GCP Cloud Build, GitHub Actions CI, semantic release
 
 ## Phase Details
@@ -102,8 +102,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Hydra config composition, train.py entrypoint, DataModule adapter, pixi.toml deps, fixed ModelCheckpoint dirpath
-- [ ] 04-02-PLAN.md — WandB confusion matrix logging, Hydra config composition and override tests
+- [x] 04-01-PLAN.md — Hydra config composition, train.py entrypoint, DataModule adapter, pixi.toml deps, fixed ModelCheckpoint dirpath
+- [x] 04-02-PLAN.md — WandB confusion matrix logging, Hydra config composition and override tests
 
 ### Phase 5: Infrastructure
 
@@ -170,9 +170,9 @@ Each phase is a strict dependency of the next. The import graph enforces this or
 | 1. Foundation and Data Pipeline | 3/3 | ✓ Complete | 2026-02-18 |
 | 2. Model Layer | 2/2 | ✓ Complete | 2026-02-18 |
 | 3. Callbacks and ONNX Export | 3/3 | ✓ Complete | 2026-02-18 |
-| 4. Training Configuration | 0/2 | Planned | - |
+| 4. Training Configuration | 2/2 | ✓ Complete | 2026-02-18 |
 | 5. Infrastructure | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-18*
-*Last updated: 2026-02-18 — Phase 3 complete (3/3 plans, 90 tests, verified 12/12)*
+*Last updated: 2026-02-18 — Phase 4 complete (2/2 plans, 101 tests, verified 7/7)*
