@@ -4,7 +4,7 @@
 _target_: classifier_training.models.resnet.ResNet18ClassificationModel
 num_classes: 43
 pretrained: true
-learning_rate: 1.0e-4
+learning_rate: 5.0e-4
 weight_decay: 1.0e-4
 warmup_epochs: 5
 label_smoothing: 0.1
