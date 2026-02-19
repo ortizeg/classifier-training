@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-18)
 
 ## Current Position
 
-Phase: 3 of 5 (Callbacks and ONNX Export) -- COMPLETE
-Plan: 3 of 3 in current phase -- COMPLETE
-Status: Phase 03 complete, ready for Phase 04
-Last activity: 2026-02-18 — Plan 03-03 complete: Hydra callback config + integration tests, 90 tests passing
+Phase: 4 of 5 (Training Configuration)
+Plan: 1 of 2 in current phase -- COMPLETE
+Status: Plan 04-01 complete, ready for Plan 04-02
+Last activity: 2026-02-18 — Plan 04-01 complete: Hydra training pipeline wiring, train.py entrypoint, 90 tests passing
 
-Progress: [████████░░] 80%
+Progress: [█████████░] 90%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 3.9 min
-- Total execution time: 0.52 hours
+- Total execution time: 0.59 hours
 
 **By Phase:**
 
@@ -30,9 +30,10 @@ Progress: [████████░░] 80%
 | 01-foundation-and-data-pipeline | 3/3 | 11 min | 3.7 min |
 | 02-model-layer | 2/2 | 7 min | 3.5 min |
 | 03-callbacks-and-onnx-export | 3/3 | 13 min | 4.3 min |
+| 04-training-configuration | 1/2 | 4 min | 4.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (3 min), 02-02 (4 min), 03-01 (6 min), 03-02 (4 min), 03-03 (3 min)
+- Last 5 plans: 02-02 (4 min), 03-01 (6 min), 03-02 (4 min), 03-03 (3 min), 04-01 (4 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -75,6 +76,11 @@ Recent decisions affecting current work:
 - [Phase 03]: SamplerDistribution fires on_train_epoch_start; _last_indices empty at epoch 0, populated from epoch 1
 - [03-03]: LightningDataModule subclass required for mock datamodule in tests -- trainer.datamodule requires proper LDM interface
 - [03-03]: Dict-batch format for integration tests -- ConfusionMatrixCallback expects ClassificationBatch dict with images/labels keys
+- [04-01]: Dual-init DataModule: config=DataModuleConfig OR flat kwargs from Hydra, with **kwargs absorbing _target_
+- [04-01]: type: ignore[operator] for model.set_class_weights() -- mypy sees LightningModule, not BaseClassificationModel
+- [04-01]: ModelCheckpoint dirpath='checkpoints' (relative) + default_root_dir=HydraConfig.cwd for stable resume
+- [04-01]: Trainer built from flat dict, not hydra.utils.instantiate (no _target_ key)
+- [04-01]: conf/model/ (singular) not conf/models/ -- Hydra requires exact match between directory name and defaults list key
 
 ### Pending Todos
 
@@ -89,5 +95,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 03-03-PLAN.md -- Phase 3 complete, 90 tests passing, ready for Phase 4
+Stopped at: Completed 04-01-PLAN.md -- Hydra training pipeline wiring complete, 90 tests passing, ready for 04-02
 Resume file: None
