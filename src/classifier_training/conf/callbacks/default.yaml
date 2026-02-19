@@ -1,0 +1,60 @@
+# Lightning built-in callbacks
+model_checkpoint:
+  _target_: lightning.pytorch.callbacks.ModelCheckpoint
+  dirpath: ${hydra:runtime.output_dir}/checkpoints
+  filename: "epoch={epoch:02d}-val_acc={val/acc_top1:.4f}"
+  monitor: val/acc_top1
+  mode: max
+  save_top_k: 3
+  save_last: true
+
+early_stopping:
+  _target_: lightning.pytorch.callbacks.EarlyStopping
+  monitor: val/acc_top1
+  mode: max
+  patience: 10
+  min_delta: 0.001
+
+lr_monitor:
+  _target_: lightning.pytorch.callbacks.LearningRateMonitor
+  logging_interval: epoch
+
+rich_progress:
+  _target_: lightning.pytorch.callbacks.RichProgressBar
+
+# Custom callbacks
+ema:
+  _target_: classifier_training.callbacks.ema.EMACallback
+  decay: 0.9999
+  warmup_steps: 2000
+
+onnx_export:
+  _target_: classifier_training.callbacks.onnx_export.ONNXExportCallback
+  output_dir: ${hydra:runtime.output_dir}
+  opset_version: 17
+  input_height: 224
+  input_width: 224
+
+confusion_matrix:
+  _target_: classifier_training.callbacks.confusion_matrix.ConfusionMatrixCallback
+  output_dir: ${hydra:runtime.output_dir}
+  num_classes: 43
+
+model_info:
+  _target_: classifier_training.callbacks.model_info.ModelInfoCallback
+  output_dir: ${hydra:runtime.output_dir}
+
+dataset_statistics:
+  _target_: classifier_training.callbacks.statistics.DatasetStatisticsCallback
+
+training_history:
+  _target_: classifier_training.callbacks.plotting.TrainingHistoryCallback
+  output_dir: ${hydra:runtime.output_dir}
+
+sampler_distribution:
+  _target_: classifier_training.callbacks.sampler.SamplerDistributionCallback
+
+sample_visualization:
+  _target_: classifier_training.callbacks.visualization.SampleVisualizationCallback
+  output_dir: ${hydra:runtime.output_dir}
+  num_samples: 16
