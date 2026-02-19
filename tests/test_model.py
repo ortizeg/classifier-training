@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import classifier_training.models  # noqa: F401
 import lightning as L
 import pytest
 import torch
 from hydra.core.config_store import ConfigStore
 
+import classifier_training.models  # noqa: F401
+from classifier_training.losses import FocalLoss, build_loss_fn
 from classifier_training.models import (
     ResNet18ClassificationModel,
     ResNet34ClassificationModel,
@@ -71,16 +72,12 @@ def resnet50_43cls() -> ResNet50ClassificationModel:
 class TestBaseMetricGuard:
     def test_top5_guard_3_classes(self) -> None:
         """top_k_5 = min(5, 3) = 3."""
-        m = ResNet18ClassificationModel(
-            num_classes=3, pretrained=False
-        )
+        m = ResNet18ClassificationModel(num_classes=3, pretrained=False)
         assert m.val_top5.top_k == 3
 
     def test_top5_guard_43_classes(self) -> None:
         """top_k_5 = min(5, 43) = 5."""
-        m = ResNet18ClassificationModel(
-            num_classes=43, pretrained=False
-        )
+        m = ResNet18ClassificationModel(num_classes=43, pretrained=False)
         assert m.val_top5.top_k == 5
 
     def test_class_weights_buffer_shape(
@@ -88,9 +85,7 @@ class TestBaseMetricGuard:
     ) -> None:
         """class_weights defaults to ones with correct shape."""
         assert resnet18_3cls.class_weights.shape == (3,)
-        assert torch.allclose(
-            resnet18_3cls.class_weights, torch.ones(3)
-        )
+        assert torch.allclose(resnet18_3cls.class_weights, torch.ones(3))
 
     def test_set_class_weights_updates_buffer(
         self, resnet18_3cls: ResNet18ClassificationModel
@@ -98,18 +93,12 @@ class TestBaseMetricGuard:
         """set_class_weights copies tensor and rebuilds loss_fn."""
         new_weights = torch.tensor([1.0, 2.0, 3.0])
         resnet18_3cls.set_class_weights(new_weights)
-        assert torch.allclose(
-            resnet18_3cls.class_weights, new_weights
-        )
+        assert torch.allclose(resnet18_3cls.class_weights, new_weights)
 
-    def test_hparams_saved(
-        self, resnet18_3cls: ResNet18ClassificationModel
-    ) -> None:
+    def test_hparams_saved(self, resnet18_3cls: ResNet18ClassificationModel) -> None:
         """save_hyperparameters stores scalar params."""
         assert resnet18_3cls.hparams["num_classes"] == 3
-        assert resnet18_3cls.hparams["learning_rate"] == pytest.approx(
-            1e-4
-        )
+        assert resnet18_3cls.hparams["learning_rate"] == pytest.approx(1e-4)
         assert "class_weights" not in resnet18_3cls.hparams
 
 
@@ -331,9 +320,7 @@ class TestOptimizerScheduler:
         assert isinstance(result["optimizer"], torch.optim.AdamW)
         # SequentialLR(LinearLR warmup) modifies the param group lr
         # at step 0, so check the hparams-stored learning_rate instead
-        assert resnet18_43cls.hparams["learning_rate"] == pytest.approx(
-            1e-4
-        )
+        assert resnet18_43cls.hparams["learning_rate"] == pytest.approx(1e-4)
 
 
 # ---------------------------------------------------------------------------
@@ -347,24 +334,118 @@ class TestHydraRegistration:
         cs = ConfigStore.instance()
         models_group = cs.repo.get("model", {})
         names = [k.replace(".yaml", "") for k in models_group]
-        assert "resnet18" in names, (
-            f"resnet18 not in ConfigStore model: {names}"
-        )
+        assert "resnet18" in names, f"resnet18 not in ConfigStore model: {names}"
 
     def test_resnet34_registered(self) -> None:
         """@register stores ResNet34 in ConfigStore model."""
         cs = ConfigStore.instance()
         models_group = cs.repo.get("model", {})
         names = [k.replace(".yaml", "") for k in models_group]
-        assert "resnet34" in names, (
-            f"resnet34 not in ConfigStore model: {names}"
-        )
+        assert "resnet34" in names, f"resnet34 not in ConfigStore model: {names}"
 
     def test_resnet50_registered(self) -> None:
         """@register stores ResNet50 in ConfigStore model."""
         cs = ConfigStore.instance()
         models_group = cs.repo.get("model", {})
         names = [k.replace(".yaml", "") for k in models_group]
-        assert "resnet50" in names, (
-            f"resnet50 not in ConfigStore model: {names}"
+        assert "resnet50" in names, f"resnet50 not in ConfigStore model: {names}"
+
+
+# ---------------------------------------------------------------------------
+# Focal Loss and configurable loss factory
+# ---------------------------------------------------------------------------
+
+
+class TestFocalLoss:
+    def test_focal_loss_forward(self) -> None:
+        """FocalLoss produces a finite scalar loss."""
+        loss_fn = FocalLoss(gamma=2.0)
+        logits = torch.randn(8, 5)
+        targets = torch.randint(0, 5, (8,))
+        loss = loss_fn(logits, targets)
+        assert loss.ndim == 0
+        assert torch.isfinite(loss)
+
+    def test_focal_loss_with_class_weights(self) -> None:
+        """FocalLoss works with per-class weight tensor."""
+        weights = torch.tensor([1.0, 2.0, 0.5, 1.5, 1.0])
+        loss_fn = FocalLoss(gamma=2.0, weight=weights)
+        logits = torch.randn(8, 5)
+        targets = torch.randint(0, 5, (8,))
+        loss = loss_fn(logits, targets)
+        assert torch.isfinite(loss)
+
+    def test_focal_loss_with_label_smoothing(self) -> None:
+        """FocalLoss respects label_smoothing parameter."""
+        loss_fn = FocalLoss(gamma=2.0, label_smoothing=0.1)
+        logits = torch.randn(8, 5)
+        targets = torch.randint(0, 5, (8,))
+        loss = loss_fn(logits, targets)
+        assert torch.isfinite(loss)
+
+    def test_focal_loss_gamma_zero_matches_ce(self) -> None:
+        """With gamma=0, focal loss degenerates to cross entropy."""
+        torch.manual_seed(42)
+        logits = torch.randn(16, 5)
+        targets = torch.randint(0, 5, (16,))
+        focal = FocalLoss(gamma=0.0)(logits, targets)
+        ce = torch.nn.CrossEntropyLoss()(logits, targets)
+        assert torch.allclose(focal, ce, atol=1e-5)
+
+
+class TestBuildLossFn:
+    def test_factory_cross_entropy(self) -> None:
+        """build_loss_fn('cross_entropy') returns CrossEntropyLoss."""
+        loss_fn = build_loss_fn("cross_entropy")
+        assert isinstance(loss_fn, torch.nn.CrossEntropyLoss)
+
+    def test_factory_focal(self) -> None:
+        """build_loss_fn('focal') returns FocalLoss."""
+        loss_fn = build_loss_fn("focal", focal_gamma=3.0)
+        assert isinstance(loss_fn, FocalLoss)
+        assert loss_fn.gamma == 3.0
+
+    def test_factory_unknown_raises(self) -> None:
+        """build_loss_fn raises ValueError for unknown names."""
+        with pytest.raises(ValueError, match="Unknown loss function"):
+            build_loss_fn("huber")
+
+    def test_factory_passes_weights(self) -> None:
+        """build_loss_fn forwards class weights."""
+        w = torch.ones(5)
+        ce = build_loss_fn("cross_entropy", weight=w)
+        assert ce.weight is not None
+        focal = build_loss_fn("focal", weight=w)
+        assert focal.weight is not None
+
+
+class TestModelWithFocalLoss:
+    def test_resnet18_focal_loss_forward(self, batch_3cls: ClassificationBatch) -> None:
+        """ResNet18 with focal loss produces finite loss."""
+        model = ResNet18ClassificationModel(
+            num_classes=3, pretrained=False, loss_name="focal"
         )
+        logits = model(batch_3cls["images"])
+        loss = model.loss_fn(logits, batch_3cls["labels"])
+        assert torch.isfinite(loss)
+
+    def test_resnet18_focal_loss_hparam_saved(self) -> None:
+        """loss_name and focal_gamma are saved in hparams."""
+        model = ResNet18ClassificationModel(
+            num_classes=3,
+            pretrained=False,
+            loss_name="focal",
+            focal_gamma=3.0,
+        )
+        assert model.hparams["loss_name"] == "focal"
+        assert model.hparams["focal_gamma"] == 3.0
+
+    def test_set_class_weights_with_focal(self) -> None:
+        """set_class_weights rebuilds focal loss with new weights."""
+        model = ResNet18ClassificationModel(
+            num_classes=3, pretrained=False, loss_name="focal"
+        )
+        new_weights = torch.tensor([1.0, 2.0, 3.0])
+        model.set_class_weights(new_weights)
+        assert isinstance(model.loss_fn, FocalLoss)
+        assert model.loss_fn.weight is not None
