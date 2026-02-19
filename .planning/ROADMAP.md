@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Model Layer** - ResNet backbones, LightningModule, metrics, optimizer, scheduler ✓ (2026-02-18)
 - [x] **Phase 3: Callbacks and ONNX Export** - All callbacks including EMA, ONNX export, confusion matrix ✓ (2026-02-18)
 - [x] **Phase 4: Training Configuration** - Hydra configs, WandB, trainer defaults, checkpoint resume ✓ (2026-02-18)
-- [ ] **Phase 5: Infrastructure** - Docker, GCP Cloud Build, GitHub Actions CI, semantic release
+- [x] **Phase 5: Infrastructure** - Docker, GCP Cloud Build, GitHub Actions CI, semantic release ✓ (2026-02-19)
 
 ## Phase Details
 
@@ -123,8 +123,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Docker + GCP Cloud Build: Dockerfile (CUDA 12.1 + pixi), cloudbuild.yaml, build scripts, pixi.toml/pyproject.toml updates
-- [ ] 05-02-PLAN.md — GitHub Actions CI: lint/test/release workflows, issue templates, PR template, CODEOWNERS
+- [x] 05-01-PLAN.md — Docker + GCP Cloud Build: Dockerfile (CUDA 12.1 + pixi), cloudbuild.yaml, build scripts, pixi.toml/pyproject.toml updates
+- [x] 05-02-PLAN.md — GitHub Actions CI: lint/test/release workflows, issue templates, PR template, CODEOWNERS, gitflow setup
 
 ## Coverage Validation
 
@@ -171,8 +171,8 @@ Each phase is a strict dependency of the next. The import graph enforces this or
 | 2. Model Layer | 2/2 | ✓ Complete | 2026-02-18 |
 | 3. Callbacks and ONNX Export | 3/3 | ✓ Complete | 2026-02-18 |
 | 4. Training Configuration | 2/2 | ✓ Complete | 2026-02-18 |
-| 5. Infrastructure | 0/2 | Not started | - |
+| 5. Infrastructure | 2/2 | ✓ Complete | 2026-02-19 |
 
 ---
 *Roadmap created: 2026-02-18*
-*Last updated: 2026-02-19 — Phase 5 planned (2 plans, Wave 1 parallel)*
+*Last updated: 2026-02-19 — Phase 5 complete (2/2 plans, 101 tests, verified 10/11 + 4 human items)*

@@ -70,14 +70,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Dockerfile with CUDA 12.1, pixi-based dependency installation
-- [ ] **INFRA-02**: GCP Cloud Build integration (cloudbuild.yaml + cloud-build.sh script)
-- [ ] **INFRA-03**: GitHub Actions CI — lint workflow (format-check, lint, typecheck)
-- [ ] **INFRA-04**: GitHub Actions CI — test workflow (pytest with coverage)
-- [ ] **INFRA-05**: GitHub Actions CI — release workflow (semantic release)
-- [ ] **INFRA-06**: Semantic release with conventional commits
-- [ ] **INFRA-07**: Gitflow workflow (main + develop branches)
-- [ ] **INFRA-08**: GitHub repository with issue templates, PR templates, branch protection
+- [x] **INFRA-01**: Dockerfile with CUDA 12.1, pixi-based dependency installation
+- [x] **INFRA-02**: GCP Cloud Build integration (cloudbuild.yaml + cloud-build.sh script)
+- [x] **INFRA-03**: GitHub Actions CI — lint workflow (format-check, lint, typecheck)
+- [x] **INFRA-04**: GitHub Actions CI — test workflow (pytest with coverage)
+- [x] **INFRA-05**: GitHub Actions CI — release workflow (semantic release)
+- [x] **INFRA-06**: Semantic release with conventional commits
+- [x] **INFRA-07**: Gitflow workflow (main + develop branches)
+- [x] **INFRA-08**: GitHub repository with issue templates, PR templates, branch protection
 
 ## v2 Requirements
 
@@ -171,14 +171,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TRAIN-05 | Phase 4 | Complete |
 | TRAIN-06 | Phase 4 | Complete |
 | TRAIN-07 | Phase 4 | Complete |
-| INFRA-01 | Phase 5 | Pending |
-| INFRA-02 | Phase 5 | Pending |
-| INFRA-03 | Phase 5 | Pending |
-| INFRA-04 | Phase 5 | Pending |
-| INFRA-05 | Phase 5 | Pending |
-| INFRA-06 | Phase 5 | Pending |
-| INFRA-07 | Phase 5 | Pending |
-| INFRA-08 | Phase 5 | Pending |
+| INFRA-01 | Phase 5 | Complete |
+| INFRA-02 | Phase 5 | Complete |
+| INFRA-03 | Phase 5 | Complete |
+| INFRA-04 | Phase 5 | Complete |
+| INFRA-05 | Phase 5 | Complete |
+| INFRA-06 | Phase 5 | Complete |
+| INFRA-07 | Phase 5 | Complete |
+| INFRA-08 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 53 total
