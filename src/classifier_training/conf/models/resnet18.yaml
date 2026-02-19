@@ -1,0 +1,12 @@
+# Hydra config for ResNet18ClassificationModel
+# Consumed by hydra.utils.instantiate(cfg.model) in the training script.
+# Flat keys only — no nested wrapper (avoids double-nesting in ConfigStore).
+_target_: classifier_training.models.resnet.ResNet18ClassificationModel
+num_classes: 43
+pretrained: true
+learning_rate: 1.0e-4
+weight_decay: 1.0e-4
+warmup_epochs: 5
+label_smoothing: 0.1
+warmup_start_factor: 1.0e-3
+cosine_eta_min_factor: 0.05
