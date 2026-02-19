@@ -99,11 +99,11 @@ Plans:
   4. Mixed precision (`16-mixed`), gradient clipping (`clip_val=1.0`), and gradient accumulation are active — confirmed by Lightning Trainer summary at run start
   5. A Hydra config override (`model=resnet50`, `data.batch_size=32`) changes the run configuration correctly
 
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 04-01: Hydra config composition — config groups for model, data, trainer, callbacks, transforms; `conf/train_basketball_resnet18.yaml` dataset override
-- [ ] 04-02: Trainer defaults and WandB — T4-tuned trainer config, WandbLogger, ModelCheckpoint with fixed dirpath, end-to-end training run validation
+- [ ] 04-01-PLAN.md — Hydra config composition, train.py entrypoint, DataModule adapter, pixi.toml deps, fixed ModelCheckpoint dirpath
+- [ ] 04-02-PLAN.md — WandB confusion matrix logging, Hydra config composition and override tests
 
 ### Phase 5: Infrastructure
 
@@ -170,7 +170,7 @@ Each phase is a strict dependency of the next. The import graph enforces this or
 | 1. Foundation and Data Pipeline | 3/3 | ✓ Complete | 2026-02-18 |
 | 2. Model Layer | 2/2 | ✓ Complete | 2026-02-18 |
 | 3. Callbacks and ONNX Export | 3/3 | ✓ Complete | 2026-02-18 |
-| 4. Training Configuration | 0/2 | Not started | - |
+| 4. Training Configuration | 0/2 | Planned | - |
 | 5. Infrastructure | 0/2 | Not started | - |
 
 ---
