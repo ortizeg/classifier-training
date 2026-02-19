@@ -13,6 +13,7 @@ from torchvision.transforms import v2
 from classifier_training.config import DataModuleConfig
 from classifier_training.data.dataset import JerseyNumberDataset
 from classifier_training.data.sampler import TrackingWeightedRandomSampler
+from classifier_training.types import ClassificationBatch
 
 # ImageNet normalization statistics — stored here and written to labels_mapping.json.
 # The ONNX inference pipeline in basketball-2d-to-3d reads normalization params
@@ -256,6 +257,24 @@ class ImageFolderDataModule(L.LightningDataModule):
         )
 
     # ------------------------------------------------------------------
+    # Collate — converts (image, label) tuples to ClassificationBatch dict
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _collate_fn(
+        batch: list[tuple[torch.Tensor, int]],
+    ) -> ClassificationBatch:
+        """Collate (image, label) tuples into ClassificationBatch dict.
+
+        The model's training_step/validation_step expects batch["images"]
+        and batch["labels"] (ClassificationBatch TypedDict), but the dataset
+        returns standard (tensor, int) tuples. This collate bridges the gap.
+        """
+        images = torch.stack([item[0] for item in batch])
+        labels = torch.tensor([item[1] for item in batch], dtype=torch.long)
+        return {"images": images, "labels": labels}
+
+    # ------------------------------------------------------------------
     # DataLoaders
     # ------------------------------------------------------------------
 
@@ -272,6 +291,7 @@ class ImageFolderDataModule(L.LightningDataModule):
             num_workers=self._num_workers,
             pin_memory=self._pin_memory,
             persistent_workers=self._persistent_workers,
+            collate_fn=self._collate_fn,
         )
 
     def val_dataloader(self) -> DataLoader[tuple[torch.Tensor, int]]:
@@ -285,6 +305,7 @@ class ImageFolderDataModule(L.LightningDataModule):
             num_workers=self._num_workers,
             pin_memory=self._pin_memory,
             persistent_workers=self._persistent_workers,
+            collate_fn=self._collate_fn,
         )
 
     def test_dataloader(self) -> DataLoader[tuple[torch.Tensor, int]]:
@@ -298,6 +319,7 @@ class ImageFolderDataModule(L.LightningDataModule):
             num_workers=self._num_workers,
             pin_memory=self._pin_memory,
             persistent_workers=self._persistent_workers,
+            collate_fn=self._collate_fn,
         )
 
     # ------------------------------------------------------------------

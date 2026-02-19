@@ -209,23 +209,26 @@ class TestImageFolderDataModuleRealDataset:
         assert data["class_to_idx"][""] == 0
 
     def test_train_dataloader_batch_shape(self) -> None:
-        """Train batch must be (B, 3, 224, 224) float32 tensors."""
+        """Train batch must be ClassificationBatch dict with (B, 3, 224, 224) float32."""
         dm = self._make_dm()
         dm.setup("fit")
         loader = dm.train_dataloader()
-        images, labels = next(iter(loader))
-        assert isinstance(images, torch.Tensor)
-        assert images.dtype == torch.float32
-        assert images.shape[1:] == (3, 224, 224)
-        assert isinstance(labels, torch.Tensor)
+        batch = next(iter(loader))
+        assert isinstance(batch, dict)
+        assert "images" in batch and "labels" in batch
+        assert isinstance(batch["images"], torch.Tensor)
+        assert batch["images"].dtype == torch.float32
+        assert batch["images"].shape[1:] == (3, 224, 224)
+        assert isinstance(batch["labels"], torch.Tensor)
 
     def test_val_dataloader_batch_shape(self) -> None:
         dm = self._make_dm()
         dm.setup("fit")
         loader = dm.val_dataloader()
-        images, _labels = next(iter(loader))
-        assert images.shape[1:] == (3, 224, 224)
-        assert images.dtype == torch.float32
+        batch = next(iter(loader))
+        assert isinstance(batch, dict)
+        assert batch["images"].shape[1:] == (3, 224, 224)
+        assert batch["images"].dtype == torch.float32
 
     def test_class_weights_shape_and_positivity(self) -> None:
         dm = self._make_dm()

@@ -1,0 +1,23 @@
+defaults:
+  - _self_
+  - model: resnet18
+  - data: basketball_jersey_numbers
+  - trainer: default
+  - callbacks: default
+  - logging: wandb
+
+seed: 42
+log_level: INFO
+
+# GCP-specific overrides — set these when launching from Cloud:
+#   pixi run train --config-name=train_jersey_ocr_resnet18 \
+#     data.data_root=/gcs/bucket/path/basketball-jersey-numbers-ocr \
+#     logging.wandb.name=jersey-ocr-run-1 \
+#     logging.wandb.tags=[gcp,t4,resnet18]
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: outputs/multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${hydra.job.num}

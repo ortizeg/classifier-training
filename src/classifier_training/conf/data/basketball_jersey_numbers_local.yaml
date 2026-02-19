@@ -1,0 +1,7 @@
+_target_: classifier_training.data.datamodule.ImageFolderDataModule
+data_root: /Users/ortizeg/1Projects/⛹️‍♂️ Next Play/data/basketball-jersey-numbers-ocr
+batch_size: 32
+num_workers: 0
+pin_memory: false
+persistent_workers: false
+image_size: 224

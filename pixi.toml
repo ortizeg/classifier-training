@@ -17,6 +17,7 @@ format = "ruff format ."
 format-check = "ruff format --check ."
 typecheck = "mypy src/"
 train = "python -m classifier_training.train"
+train-local = "python -m classifier_training.train --config-name=train_jersey_ocr_resnet18_local"
 precommit = "pre-commit run --all-files"
 build = { cmd = "bash scripts/cloud-build.sh" }
 build-local = { cmd = "bash scripts/build-docker.sh --local" }

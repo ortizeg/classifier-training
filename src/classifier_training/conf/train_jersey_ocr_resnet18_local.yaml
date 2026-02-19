@@ -1,0 +1,17 @@
+defaults:
+  - _self_
+  - model: resnet18
+  - data: basketball_jersey_numbers_local
+  - trainer: local
+  - callbacks: local
+  - logging: none
+
+seed: 42
+log_level: INFO
+
+hydra:
+  run:
+    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  sweep:
+    dir: outputs/multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    subdir: ${hydra.job.num}
