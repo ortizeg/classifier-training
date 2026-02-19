@@ -57,6 +57,9 @@ class ImageFolderDataModule(L.LightningDataModule):
         pin_memory: bool = True,
         persistent_workers: bool = True,
         image_size: int = 224,
+        train_transforms: v2.Compose | None = None,
+        val_transforms: v2.Compose | None = None,
+        test_transforms: v2.Compose | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__()
@@ -72,6 +75,12 @@ class ImageFolderDataModule(L.LightningDataModule):
                 image_size=image_size,
             )
         self._data_root = Path(self._config.data_root)
+
+        # Optional pre-built transform pipelines (from Hydra config).
+        # When provided, these override the internal _build_*_transforms() methods.
+        self._external_train_transforms = train_transforms
+        self._external_val_transforms = val_transforms
+        self._external_test_transforms = test_transforms
 
         # MPS guard: multiprocessing DataLoader workers crash on Apple Silicon.
         # Detect at construction time and override num_workers.
@@ -186,15 +195,17 @@ class ImageFolderDataModule(L.LightningDataModule):
                    None instantiates all three.
         """
         if stage in ("fit", None):
+            train_tfm = self._external_train_transforms or self._build_train_transforms()
+            val_tfm = self._external_val_transforms or self._build_val_test_transforms()
             self._train_dataset = JerseyNumberDataset(
                 root=self._data_root / "train",
                 class_to_idx=self.class_to_idx,
-                transform=self._build_train_transforms(),
+                transform=train_tfm,
             )
             self._val_dataset = JerseyNumberDataset(
                 root=self._data_root / "valid",
                 class_to_idx=self.class_to_idx,
-                transform=self._build_val_test_transforms(),
+                transform=val_tfm,
             )
             logger.info(
                 f"Setup fit: train={len(self._train_dataset)}, "
@@ -202,10 +213,11 @@ class ImageFolderDataModule(L.LightningDataModule):
             )
 
         if stage in ("test", None):
+            test_tfm = self._external_test_transforms or self._build_val_test_transforms()
             self._test_dataset = JerseyNumberDataset(
                 root=self._data_root / "test",
                 class_to_idx=self.class_to_idx,
-                transform=self._build_val_test_transforms(),
+                transform=test_tfm,
             )
             logger.info(f"Setup test: {len(self._test_dataset)} samples")
 

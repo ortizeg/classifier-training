@@ -34,8 +34,26 @@ def main(cfg: DictConfig) -> None:
     # Seed everything for reproducibility
     L.seed_everything(cfg.get("seed", 42), workers=True)
 
+    # Instantiate transforms (if configured)
+    train_transforms = None
+    val_transforms = None
+    test_transforms = None
+    if cfg.get("transforms"):
+        tfm = cfg.transforms
+        if tfm.get("train_transforms"):
+            train_transforms = hydra.utils.instantiate(tfm.train_transforms)
+        if tfm.get("val_transforms"):
+            val_transforms = hydra.utils.instantiate(tfm.val_transforms)
+        if tfm.get("test_transforms"):
+            test_transforms = hydra.utils.instantiate(tfm.test_transforms)
+
     # Instantiate data module
-    datamodule: L.LightningDataModule = hydra.utils.instantiate(cfg.data)
+    datamodule: L.LightningDataModule = hydra.utils.instantiate(
+        cfg.data,
+        train_transforms=train_transforms,
+        val_transforms=val_transforms,
+        test_transforms=test_transforms,
+    )
     datamodule.setup("fit")
 
     # Instantiate model and set class weights from data
