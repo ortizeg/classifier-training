@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Train image classifiers with the same production-quality infrastructure, reproducibility, and cloud deployment workflow established in the object-detection-training repository — configurable via Hydra YAML, with full training observability through callbacks.
-**Current focus:** Phase 3 COMPLETE -- all 12 callbacks implemented, configured, and integration-tested. Ready for Phase 4 (Training Pipeline).
+**Current focus:** Phase 4 COMPLETE -- Hydra training config wired, WandB logging, 101 tests passing. Ready for Phase 5 (Cloud Training).
 
 ## Current Position
 
-Phase: 4 of 5 (Training Configuration)
-Plan: 1 of 2 in current phase -- COMPLETE
-Status: Plan 04-01 complete, ready for Plan 04-02
-Last activity: 2026-02-18 — Plan 04-01 complete: Hydra training pipeline wiring, train.py entrypoint, 90 tests passing
+Phase: 4 of 5 (Training Configuration) -- COMPLETE
+Plan: 2 of 2 in current phase -- COMPLETE
+Status: Phase 4 complete, ready for Phase 5
+Last activity: 2026-02-18 — Plan 04-02 complete: WandB image logging and 11 config validation tests, 101 tests passing
 
-Progress: [█████████░] 90%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 3.9 min
-- Total execution time: 0.59 hours
+- Total plans completed: 10
+- Average duration: 3.7 min
+- Total execution time: 0.62 hours
 
 **By Phase:**
 
@@ -30,14 +30,15 @@ Progress: [█████████░] 90%
 | 01-foundation-and-data-pipeline | 3/3 | 11 min | 3.7 min |
 | 02-model-layer | 2/2 | 7 min | 3.5 min |
 | 03-callbacks-and-onnx-export | 3/3 | 13 min | 4.3 min |
-| 04-training-configuration | 1/2 | 4 min | 4.0 min |
+| 04-training-configuration | 2/2 | 6 min | 3.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (4 min), 03-01 (6 min), 03-02 (4 min), 03-03 (3 min), 04-01 (4 min)
+- Last 5 plans: 03-01 (6 min), 03-02 (4 min), 03-03 (3 min), 04-01 (4 min), 04-02 (2 min)
 - Trend: stable
 
 *Updated after each plan completion*
 | Phase 03 P03 | 3 | 2 tasks | 2 files |
+| Phase 04 P02 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Recent decisions affecting current work:
 - [04-01]: ModelCheckpoint dirpath='checkpoints' (relative) + default_root_dir=HydraConfig.cwd for stable resume
 - [04-01]: Trainer built from flat dict, not hydra.utils.instantiate (no _target_ key)
 - [04-01]: conf/model/ (singular) not conf/models/ -- Hydra requires exact match between directory name and defaults list key
+- [Phase 04]: Factory fixture for Hydra override tests -- avoids GlobalHydra conflicts between compose calls
+- [Phase 04]: pretrained=False override in model instantiation tests -- avoids weight downloads in CI
 
 ### Pending Todos
 
@@ -95,5 +98,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 04-01-PLAN.md -- Hydra training pipeline wiring complete, 90 tests passing, ready for 04-02
+Stopped at: Completed 04-02-PLAN.md -- Phase 4 complete, 101 tests passing, ready for Phase 5
 Resume file: None
