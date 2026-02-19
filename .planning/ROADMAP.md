@@ -120,11 +120,11 @@ Plans:
   4. A conventional commit merged to `main` triggers the release workflow and creates a new GitHub release with a version bump
   5. The repository has issue templates, a PR template, and branch protection rules configured on `main` and `develop`
 
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 05-01: Docker and GCP Cloud Build — Dockerfile (CUDA 12.1 + pixi), cloudbuild.yaml, cloud-build.sh script
-- [ ] 05-02: GitHub Actions CI — lint workflow, test workflow, release workflow; semantic release config; Gitflow branch protection
+- [ ] 05-01-PLAN.md — Docker + GCP Cloud Build: Dockerfile (CUDA 12.1 + pixi), cloudbuild.yaml, build scripts, pixi.toml/pyproject.toml updates
+- [ ] 05-02-PLAN.md — GitHub Actions CI: lint/test/release workflows, issue templates, PR template, CODEOWNERS
 
 ## Coverage Validation
 
@@ -175,4 +175,4 @@ Each phase is a strict dependency of the next. The import graph enforces this or
 
 ---
 *Roadmap created: 2026-02-18*
-*Last updated: 2026-02-18 — Phase 4 complete (2/2 plans, 101 tests, verified 7/7)*
+*Last updated: 2026-02-19 — Phase 5 planned (2 plans, Wave 1 parallel)*
