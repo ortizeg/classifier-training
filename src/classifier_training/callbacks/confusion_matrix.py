@@ -8,6 +8,7 @@ import lightning as L
 import matplotlib
 import matplotlib.pyplot as plt
 import torch
+from lightning.pytorch.loggers import WandbLogger
 from loguru import logger
 from torchmetrics.classification import MulticlassConfusionMatrix
 
@@ -82,9 +83,20 @@ class ConfusionMatrixCallback(L.Callback):
         self._cm.reset()
 
         epoch = trainer.current_epoch
-        self._plot_and_save(cm_tensor, epoch)
+        png_path = self._plot_and_save(cm_tensor, epoch)
 
-    def _plot_and_save(self, cm: torch.Tensor, epoch: int) -> None:
+        # Log confusion matrix image to WandB if WandbLogger is active
+        if png_path.exists():
+            for lgr in trainer.loggers:
+                if isinstance(lgr, WandbLogger):
+                    lgr.log_image(
+                        key="confusion_matrix",
+                        images=[str(png_path)],
+                        step=trainer.current_epoch,
+                    )
+                    logger.debug(f"Logged confusion matrix to WandB (epoch {epoch})")
+
+    def _plot_and_save(self, cm: torch.Tensor, epoch: int) -> Path:
         """Render confusion matrix as a heatmap and save to disk."""
         matplotlib.use("Agg")
 
@@ -114,3 +126,4 @@ class ConfusionMatrixCallback(L.Callback):
         plt.close(fig)
 
         logger.info(f"Confusion matrix saved to {save_path}")
+        return save_path
