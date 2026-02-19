@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Train image classifiers with the same production-quality infrastructure, reproducibility, and cloud deployment workflow established in the object-detection-training repository — configurable via Hydra YAML, with full training observability through callbacks.
-**Current focus:** Phase 3 in progress — Plans 01-02 complete (2/3). All 8 callbacks implemented. Remaining: Hydra callback configuration (plan 03).
+**Current focus:** Phase 3 COMPLETE -- all 12 callbacks implemented, configured, and integration-tested. Ready for Phase 4 (Training Pipeline).
 
 ## Current Position
 
-Phase: 3 of 5 (Callbacks and ONNX Export)
-Plan: 2 of 3 in current phase -- COMPLETE
-Status: Plan 03-02 complete, continuing with 03-03
-Last activity: 2026-02-18 — Plan 03-02 complete: 6 observability callbacks, 87 tests passing
+Phase: 3 of 5 (Callbacks and ONNX Export) -- COMPLETE
+Plan: 3 of 3 in current phase -- COMPLETE
+Status: Phase 03 complete, ready for Phase 04
+Last activity: 2026-02-18 — Plan 03-03 complete: Hydra callback config + integration tests, 90 tests passing
 
-Progress: [███████░░░] 70%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: 4.0 min
-- Total execution time: 0.47 hours
+- Total plans completed: 8
+- Average duration: 3.9 min
+- Total execution time: 0.52 hours
 
 **By Phase:**
 
@@ -29,14 +29,14 @@ Progress: [███████░░░] 70%
 |-------|-------|-------|----------|
 | 01-foundation-and-data-pipeline | 3/3 | 11 min | 3.7 min |
 | 02-model-layer | 2/2 | 7 min | 3.5 min |
-| 03-callbacks-and-onnx-export | 2/3 | 10 min | 5.0 min |
+| 03-callbacks-and-onnx-export | 3/3 | 13 min | 4.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (4 min), 02-01 (3 min), 02-02 (4 min), 03-01 (6 min), 03-02 (4 min)
+- Last 5 plans: 02-01 (3 min), 02-02 (4 min), 03-01 (6 min), 03-02 (4 min), 03-03 (3 min)
 - Trend: stable
 
 *Updated after each plan completion*
-| Phase 03 P02 | 4 | 2 tasks | 8 files |
+| Phase 03 P03 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -73,6 +73,8 @@ Recent decisions affecting current work:
 - [Phase 03]: MulticlassConfusionMatrix initialized in on_fit_start for correct device placement
 - [Phase 03]: matplotlib.use('Agg') inside plot methods, not module level -- avoids backend conflicts
 - [Phase 03]: SamplerDistribution fires on_train_epoch_start; _last_indices empty at epoch 0, populated from epoch 1
+- [03-03]: LightningDataModule subclass required for mock datamodule in tests -- trainer.datamodule requires proper LDM interface
+- [03-03]: Dict-batch format for integration tests -- ConfusionMatrixCallback expects ClassificationBatch dict with images/labels keys
 
 ### Pending Todos
 
@@ -87,5 +89,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 03-02-PLAN.md -- 6 observability callbacks, 87 tests passing
+Stopped at: Completed 03-03-PLAN.md -- Phase 3 complete, 90 tests passing, ready for Phase 4
 Resume file: None
