@@ -5,32 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Train image classifiers with the same production-quality infrastructure, reproducibility, and cloud deployment workflow established in the object-detection-training repository — configurable via Hydra YAML, with full training observability through callbacks.
-**Current focus:** Phase 1 COMPLETE — ready for Phase 2 (Object Detection) + Phase 5 (Court Mapping) in parallel
+**Current focus:** Phase 2 in progress — BaseClassificationModel complete, ready for Plan 02-02 (concrete ResNet models)
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation and Data Pipeline) — COMPLETE
-Plan: 3 of 3 in current phase — COMPLETE
-Status: Phase 1 complete, ready for Phase 2
-Last activity: 2026-02-18 — Plan 01-03 complete: JerseyNumberDataset, ImageFolderDataModule, 34 tests, all Phase 1 criteria
+Phase: 2 of 5 (Model Layer)
+Plan: 1 of 2 in current phase — COMPLETE
+Status: Plan 02-01 complete, ready for Plan 02-02
+Last activity: 2026-02-18 — Plan 02-01 complete: BaseClassificationModel, @register decorator, hydra-core/torchmetrics deps
 
-Progress: [███░░░░░░░] 20%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 3.7 min
-- Total execution time: 0.18 hours
+- Total plans completed: 4
+- Average duration: 3.5 min
+- Total execution time: 0.23 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-and-data-pipeline | 3/3 | 11 min | 3.7 min |
+| 02-model-layer | 1/2 | 3 min | 3.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 01-03 (4 min)
+- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 01-03 (4 min), 02-01 (3 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -58,6 +59,8 @@ Recent decisions affecting current work:
 - [01-03]: from collections.abc import Callable instead of from typing import Callable — UP035 pyupgrade rule enforced by ruff
 - [01-03]: len(dataset) = annotation rows not unique images — real dataset has 2930 rows for 2891 images; sampling by annotation row preserves per-label correctness
 - [01-03]: '' (empty-string class) legitimately at index 0 — sorted(['', '0', ...]) places '' first; represents unreadable jersey numbers
+- [Phase 02]: Explicit class_weights: torch.Tensor annotation on class to satisfy mypy strict with register_buffer
+- [Phase 02]: Copied only @register decorator from sibling repo, not instantiate_* helpers
 
 ### Pending Todos
 
@@ -72,5 +75,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 01-03-PLAN.md — Phase 1 complete; JerseyNumberDataset, ImageFolderDataModule, 34 tests, all 5 criteria satisfied
+Stopped at: Completed 02-01-PLAN.md — BaseClassificationModel, @register decorator, hydra-core/torchmetrics deps added
 Resume file: None
