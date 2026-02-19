@@ -6,6 +6,9 @@ authors = ["Enrique G. Ortiz <ortizeg@gmail.com>"]
 channels = ["conda-forge"]
 platforms = ["osx-arm64", "linux-64"]
 
+[system-requirements]
+cuda = "12.1"
+
 [tasks]
 test = "pytest"
 test-cov = "pytest --cov=src --cov-report=term --cov-report=xml -v"
@@ -15,6 +18,8 @@ format-check = "ruff format --check ."
 typecheck = "mypy src/"
 train = "python -m classifier_training.train"
 precommit = "pre-commit run --all-files"
+build = { cmd = "bash scripts/cloud-build.sh" }
+build-local = { cmd = "bash scripts/build-docker.sh --local" }
 
 [dependencies]
 python = "3.11.*"
@@ -41,6 +46,7 @@ pre-commit = "*"
 
 [environments]
 default = ["dev"]
+prod = []
 
 [pypi-dependencies]
 classifier-training = { path = ".", editable = true }
