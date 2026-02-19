@@ -5,32 +5,32 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Train image classifiers with the same production-quality infrastructure, reproducibility, and cloud deployment workflow established in the object-detection-training repository — configurable via Hydra YAML, with full training observability through callbacks.
-**Current focus:** Phase 1 — Foundation and Data Pipeline
+**Current focus:** Phase 1 COMPLETE — ready for Phase 2 (Object Detection) + Phase 5 (Court Mapping) in parallel
 
 ## Current Position
 
-Phase: 1 of 5 (Foundation and Data Pipeline)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-18 — Plan 01-02 complete: DataModuleConfig, ClassificationBatch, conftest fixture, 7 unit tests
+Phase: 1 of 5 (Foundation and Data Pipeline) — COMPLETE
+Plan: 3 of 3 in current phase — COMPLETE
+Status: Phase 1 complete, ready for Phase 2
+Last activity: 2026-02-18 — Plan 01-03 complete: JerseyNumberDataset, ImageFolderDataModule, 34 tests, all Phase 1 criteria
 
-Progress: [██░░░░░░░░] 13%
+Progress: [███░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 3.5 min
-- Total execution time: 0.12 hours
+- Total plans completed: 3
+- Average duration: 3.7 min
+- Total execution time: 0.18 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation-and-data-pipeline | 2/3 | 7 min | 3.5 min |
+| 01-foundation-and-data-pipeline | 3/3 | 11 min | 3.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (4 min)
+- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 01-03 (4 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -54,6 +54,10 @@ Recent decisions affecting current work:
 - [01-02]: MPS num_workers guard deferred to DataModule — config is a pure data model with no runtime torch access
 - [01-02]: tmp_dataset_dir uses flat files + JSONL (not ImageFolder subdirs) — mirrors real basketball-jersey-numbers-ocr dataset structure
 - [01-02]: Test path strings use /data/test instead of /tmp/data to avoid ruff S108 false positives
+- [01-03]: RuntimeError instead of assert for setup() pre-condition guards — ruff S101 flags assert in src code; RuntimeError is semantically correct for API misuse
+- [01-03]: from collections.abc import Callable instead of from typing import Callable — UP035 pyupgrade rule enforced by ruff
+- [01-03]: len(dataset) = annotation rows not unique images — real dataset has 2930 rows for 2891 images; sampling by annotation row preserves per-label correctness
+- [01-03]: '' (empty-string class) legitimately at index 0 — sorted(['', '0', ...]) places '' first; represents unreadable jersey numbers
 
 ### Pending Todos
 
@@ -63,10 +67,10 @@ None yet.
 
 - [Research]: EMA + ModelCheckpoint timing interaction (Lightning issue #11276) — plan-phase for Phase 3 should trace hook ordering before implementation
 - [Research]: AMP stability on T4 with classification (`clip_val=1.0` vs `clip_val=5.0`) requires empirical smoke run in Phase 4 — plan for it explicitly
-- [Research]: Actual basketball jersey numbers dataset class distribution not yet characterized — `DatasetStatisticsCallback` is a blocking deliverable in Phase 1
+- [Resolved]: Actual basketball jersey numbers dataset class distribution characterized — 43 classes, '' at idx 0, 2930 train rows, 372 val rows, 365 test rows
 
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 01-02-PLAN.md — DataModuleConfig, ClassificationBatch, conftest fixture, 7 unit tests
+Stopped at: Completed 01-03-PLAN.md — Phase 1 complete; JerseyNumberDataset, ImageFolderDataModule, 34 tests, all 5 criteria satisfied
 Resume file: None
