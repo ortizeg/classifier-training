@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Train image classifiers with the same production-quality infrastructure, reproducibility, and cloud deployment workflow established in the object-detection-training repository — configurable via Hydra YAML, with full training observability through callbacks.
-**Current focus:** Phase 2 complete — BaseClassificationModel + ResNet18/50 models + Hydra configs + 55 tests. Ready for Phase 3 (Training Pipeline).
+**Current focus:** Phase 3 in progress — EMA + ONNX export callbacks complete (plan 01/03). Implementing remaining callbacks.
 
 ## Current Position
 
-Phase: 2 of 5 (Model Layer) -- COMPLETE
-Plan: 2 of 2 in current phase -- COMPLETE
-Status: Phase 2 complete, ready for Phase 3
-Last activity: 2026-02-18 — Plan 02-02 complete: ResNet18/50 models, Hydra YAML configs, 21-test model suite
+Phase: 3 of 5 (Callbacks and ONNX Export)
+Plan: 1 of 3 in current phase -- COMPLETE
+Status: Plan 03-01 complete, continuing with 03-02
+Last activity: 2026-02-18 — Plan 03-01 complete: EMACallback, ONNXExportCallback, TrackingWeightedRandomSampler, 72 tests passing
 
-Progress: [█████░░░░░] 50%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 3.6 min
-- Total execution time: 0.30 hours
+- Total plans completed: 6
+- Average duration: 4.0 min
+- Total execution time: 0.40 hours
 
 **By Phase:**
 
@@ -29,9 +29,10 @@ Progress: [█████░░░░░] 50%
 |-------|-------|-------|----------|
 | 01-foundation-and-data-pipeline | 3/3 | 11 min | 3.7 min |
 | 02-model-layer | 2/2 | 7 min | 3.5 min |
+| 03-callbacks-and-onnx-export | 1/3 | 6 min | 6.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (4 min), 01-03 (4 min), 02-01 (3 min), 02-02 (4 min)
+- Last 5 plans: 01-03 (4 min), 02-01 (3 min), 02-02 (4 min), 03-01 (6 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -64,6 +65,10 @@ Recent decisions affecting current work:
 - [02-02]: **kwargs: Any (not object) for Hydra forwarded params -- mypy strict rejects **dict[str, object] for typed params
 - [02-02]: ConfigStore repo is a plain dict in hydra-core 1.3.x -- use cs.repo.get() not cs.repo.list()
 - [02-02]: pretrained=False parameter pattern for test usage -- avoids 44-98MB downloads in CI
+- [03-01]: Warmup formula min(decay, (1+step)/(10+step)) -- smooth ramp matching sibling repo
+- [03-01]: Legacy ONNX exporter via TORCH_ONNX_LEGACY_EXPORTER=1 + dynamo=False monkeypatch
+- [03-01]: getattr(trainer, 'datamodule') for mypy compatibility -- trainer.datamodule not typed in Lightning stubs
+- [03-01]: Real LightningModule in ONNX tests (not MagicMock) -- deepcopy compatibility with torch.onnx.export
 
 ### Pending Todos
 
@@ -78,5 +83,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 02-02-PLAN.md — Phase 2 complete. ResNet18/50 models, Hydra configs, 55 total tests passing.
+Stopped at: Completed 03-01-PLAN.md — EMACallback, ONNXExportCallback, TrackingWeightedRandomSampler. 72 tests passing.
 Resume file: None
