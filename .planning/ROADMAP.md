@@ -56,11 +56,11 @@ Plans:
   3. Top-1 accuracy, Top-5 accuracy, and per-class accuracy are logged per epoch with no NaN or 0.0 artifacts — confirmed by the Pattern A (update/compute/reset) unit test
   4. A Hydra config override `model=resnet18` or `model=resnet50` selects the correct backbone with the tuned default `lr=1e-4`
 
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: BaseClassificationModel — LightningModule with CrossEntropyLoss, torchmetrics Pattern A, AdamW + CosineAnnealingLR + LinearLR warmup
-- [ ] 02-02: ResNet18 and ResNet50 concrete models — torchvision pretrained weights, `@register` for Hydra, model YAML configs with tuned hyperparameters
+- [ ] 02-01-PLAN.md — Infrastructure (hydra-core in pixi.toml, @register decorator), BaseClassificationModel with CrossEntropyLoss buffer, Pattern A torchmetrics, AdamW + SequentialLR
+- [ ] 02-02-PLAN.md — ResNet18ClassificationModel and ResNet50ClassificationModel (torchvision pretrained, @register), Hydra YAML configs, full test suite (test_model.py)
 
 ### Phase 3: Callbacks and ONNX Export
 
@@ -175,4 +175,4 @@ Each phase is a strict dependency of the next. The import graph enforces this or
 
 ---
 *Roadmap created: 2026-02-18*
-*Last updated: 2026-02-18 — Phase 1 plans created (01-01, 01-02, 01-03)*
+*Last updated: 2026-02-18 — Phase 2 plans created (02-01, 02-02)*
