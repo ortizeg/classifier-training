@@ -6,11 +6,12 @@ from pathlib import Path
 import lightning as L
 import torch
 from loguru import logger
-from torch.utils.data import DataLoader, WeightedRandomSampler
+from torch.utils.data import DataLoader
 from torchvision.transforms import v2
 
 from classifier_training.config import DataModuleConfig
 from classifier_training.data.dataset import JerseyNumberDataset
+from classifier_training.data.sampler import TrackingWeightedRandomSampler
 
 # ImageNet normalization statistics — stored here and written to labels_mapping.json.
 # The ONNX inference pipeline in basketball-2d-to-3d reads normalization params
@@ -202,7 +203,7 @@ class ImageFolderDataModule(L.LightningDataModule):
         """
         return self._compute_class_weights()
 
-    def _build_sampler(self) -> WeightedRandomSampler:
+    def _build_sampler(self) -> TrackingWeightedRandomSampler:
         """Per-sample weight sampler for WeightedRandomSampler.
 
         Uses inverse class frequency: rare classes get higher per-sample weight.
@@ -218,7 +219,7 @@ class ImageFolderDataModule(L.LightningDataModule):
             class_weights[label].item()
             for _, label in self._train_dataset.samples
         ]
-        return WeightedRandomSampler(
+        return TrackingWeightedRandomSampler(
             weights=sample_weights,
             num_samples=len(sample_weights),
             replacement=True,
