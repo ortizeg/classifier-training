@@ -1,0 +1,53 @@
+# Basketball jersey number OCR transforms.
+# Adds GaussianBlur to simulate motion blur and low-resolution captures
+# common in broadcast basketball footage.
+
+image_size: 224
+
+train_transforms:
+  _target_: torchvision.transforms.v2.Compose
+  transforms:
+    - _target_: torchvision.transforms.v2.RandomResizedCrop
+      size: ${transforms.image_size}
+    - _target_: torchvision.transforms.v2.RandomHorizontalFlip
+    - _target_: torchvision.transforms.v2.ColorJitter
+      brightness: 0.2
+      contrast: 0.2
+      saturation: 0.2
+      hue: 0.1
+    - _target_: torchvision.transforms.v2.GaussianBlur
+      kernel_size: 5
+      sigma:
+        - 0.1
+        - 2.0
+    - _target_: classifier_training.transforms.ToFloat32Tensor
+      scale: true
+    - _target_: torchvision.transforms.v2.Normalize
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+
+val_transforms:
+  _target_: torchvision.transforms.v2.Compose
+  transforms:
+    - _target_: torchvision.transforms.v2.Resize
+      size: 256
+    - _target_: torchvision.transforms.v2.CenterCrop
+      size: ${transforms.image_size}
+    - _target_: classifier_training.transforms.ToFloat32Tensor
+      scale: true
+    - _target_: torchvision.transforms.v2.Normalize
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+
+test_transforms:
+  _target_: torchvision.transforms.v2.Compose
+  transforms:
+    - _target_: torchvision.transforms.v2.Resize
+      size: 256
+    - _target_: torchvision.transforms.v2.CenterCrop
+      size: ${transforms.image_size}
+    - _target_: classifier_training.transforms.ToFloat32Tensor
+      scale: true
+    - _target_: torchvision.transforms.v2.Normalize
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
