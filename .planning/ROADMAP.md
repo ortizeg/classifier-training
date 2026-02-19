@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation and Data Pipeline** - Project scaffold, data module, transforms, class imbalance handling ✓ (2026-02-18)
 - [x] **Phase 2: Model Layer** - ResNet backbones, LightningModule, metrics, optimizer, scheduler ✓ (2026-02-18)
-- [ ] **Phase 3: Callbacks and ONNX Export** - All callbacks including EMA, ONNX export, confusion matrix
+- [x] **Phase 3: Callbacks and ONNX Export** - All callbacks including EMA, ONNX export, confusion matrix ✓ (2026-02-18)
 - [ ] **Phase 4: Training Configuration** - Hydra configs, WandB, trainer defaults, checkpoint resume
 - [ ] **Phase 5: Infrastructure** - Docker, GCP Cloud Build, GitHub Actions CI, semantic release
 
@@ -80,9 +80,9 @@ Plans:
 **Plans:** 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Dependencies + EMACallback + ONNXExportCallback + TrackingWeightedRandomSampler + tests
-- [ ] 03-02-PLAN.md — Observability callbacks (ConfusionMatrix, DatasetStats, ModelInfo, TrainingHistory, SamplerDist, SampleViz) + tests
-- [ ] 03-03-PLAN.md — Hydra conf/callbacks/default.yaml (all 12 callbacks) + integration test
+- [x] 03-01-PLAN.md — Dependencies + EMACallback + ONNXExportCallback + TrackingWeightedRandomSampler + tests
+- [x] 03-02-PLAN.md — Observability callbacks (ConfusionMatrix, DatasetStats, ModelInfo, TrainingHistory, SamplerDist, SampleViz) + tests
+- [x] 03-03-PLAN.md — Hydra conf/callbacks/default.yaml (all 12 callbacks) + integration test
 
 ### Phase 4: Training Configuration
 
@@ -169,10 +169,10 @@ Each phase is a strict dependency of the next. The import graph enforces this or
 |-------|----------------|--------|-----------|
 | 1. Foundation and Data Pipeline | 3/3 | ✓ Complete | 2026-02-18 |
 | 2. Model Layer | 2/2 | ✓ Complete | 2026-02-18 |
-| 3. Callbacks and ONNX Export | 0/3 | Not started | - |
+| 3. Callbacks and ONNX Export | 3/3 | ✓ Complete | 2026-02-18 |
 | 4. Training Configuration | 0/2 | Not started | - |
 | 5. Infrastructure | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-18*
-*Last updated: 2026-02-18 — Phase 2 complete (2/2 plans, 55 tests, verified 7/7)*
+*Last updated: 2026-02-18 — Phase 3 complete (3/3 plans, 90 tests, verified 12/12)*

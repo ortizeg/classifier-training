@@ -45,18 +45,18 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Callbacks
 
-- [ ] **CALL-01**: EMA callback with configurable decay and warmup (ported from sibling repo)
-- [ ] **CALL-02**: ONNX export callback — exports from EMA state dict, output `["logits"]`, dynamic batch axis
-- [ ] **CALL-03**: Confusion matrix callback — per-epoch validation heatmap PNG, logged to WandB
-- [ ] **CALL-04**: Model info callback — FLOPs, parameters, model size, labels_mapping.json
-- [ ] **CALL-05**: Dataset statistics callback — class distribution table at training start
-- [ ] **CALL-06**: Training history plots callback — loss/accuracy curves saved per epoch
-- [ ] **CALL-07**: Sample visualization callback — predicted vs true class overlaid on images
-- [ ] **CALL-08**: Sampler distribution callback — validates class balancing is working
-- [ ] **CALL-09**: Rich progress bar callback
-- [ ] **CALL-10**: Learning rate monitor callback
-- [ ] **CALL-11**: Early stopping callback with configurable patience
-- [ ] **CALL-12**: Model checkpoint callback with accuracy-based monitoring (best + last)
+- [x] **CALL-01**: EMA callback with configurable decay and warmup (ported from sibling repo)
+- [x] **CALL-02**: ONNX export callback — exports from EMA state dict, output `["logits"]`, dynamic batch axis
+- [x] **CALL-03**: Confusion matrix callback — per-epoch validation heatmap PNG, logged to WandB
+- [x] **CALL-04**: Model info callback — FLOPs, parameters, model size, labels_mapping.json
+- [x] **CALL-05**: Dataset statistics callback — class distribution table at training start
+- [x] **CALL-06**: Training history plots callback — loss/accuracy curves saved per epoch
+- [x] **CALL-07**: Sample visualization callback — predicted vs true class overlaid on images
+- [x] **CALL-08**: Sampler distribution callback — validates class balancing is working
+- [x] **CALL-09**: Rich progress bar callback
+- [x] **CALL-10**: Learning rate monitor callback
+- [x] **CALL-11**: Early stopping callback with configurable patience
+- [x] **CALL-12**: Model checkpoint callback with accuracy-based monitoring (best + last)
 
 ### Training Configuration
 
@@ -152,18 +152,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MODEL-07 | Phase 2 | Complete |
 | MODEL-08 | Phase 2 | Complete |
 | MODEL-09 | Phase 2 | Complete |
-| CALL-01 | Phase 3 | Pending |
-| CALL-02 | Phase 3 | Pending |
-| CALL-03 | Phase 3 | Pending |
-| CALL-04 | Phase 3 | Pending |
-| CALL-05 | Phase 3 | Pending |
-| CALL-06 | Phase 3 | Pending |
-| CALL-07 | Phase 3 | Pending |
-| CALL-08 | Phase 3 | Pending |
-| CALL-09 | Phase 3 | Pending |
-| CALL-10 | Phase 3 | Pending |
-| CALL-11 | Phase 3 | Pending |
-| CALL-12 | Phase 3 | Pending |
+| CALL-01 | Phase 3 | Complete |
+| CALL-02 | Phase 3 | Complete |
+| CALL-03 | Phase 3 | Complete |
+| CALL-04 | Phase 3 | Complete |
+| CALL-05 | Phase 3 | Complete |
+| CALL-06 | Phase 3 | Complete |
+| CALL-07 | Phase 3 | Complete |
+| CALL-08 | Phase 3 | Complete |
+| CALL-09 | Phase 3 | Complete |
+| CALL-10 | Phase 3 | Complete |
+| CALL-11 | Phase 3 | Complete |
+| CALL-12 | Phase 3 | Complete |
 | TRAIN-01 | Phase 4 | Pending |
 | TRAIN-02 | Phase 4 | Pending |
 | TRAIN-03 | Phase 4 | Pending |
