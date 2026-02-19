@@ -12,7 +12,7 @@ A production-ready image classification training framework built to mirror the s
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation and Data Pipeline** - Project scaffold, data module, transforms, class imbalance handling
+- [x] **Phase 1: Foundation and Data Pipeline** - Project scaffold, data module, transforms, class imbalance handling ✓ (2026-02-18)
 - [ ] **Phase 2: Model Layer** - ResNet backbones, LightningModule, metrics, optimizer, scheduler
 - [ ] **Phase 3: Callbacks and ONNX Export** - All callbacks including EMA, ONNX export, confusion matrix
 - [ ] **Phase 4: Training Configuration** - Hydra configs, WandB, trainer defaults, checkpoint resume
@@ -38,9 +38,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Project scaffold: pixi.toml, pyproject.toml, src layout, pre-commit, ruff, mypy
-- [ ] 01-02-PLAN.md — Core types and configuration: DataModuleConfig pydantic model, ClassificationBatch TypedDict, test conftest fixtures
-- [ ] 01-03-PLAN.md — ImageFolderDataModule: JerseyNumberDataset, JSONL parsing, transforms, WeightedRandomSampler, labels_mapping.json
+- [x] 01-01-PLAN.md — Project scaffold: pixi.toml, pyproject.toml, src layout, pre-commit, ruff, mypy
+- [x] 01-02-PLAN.md — Core types and configuration: DataModuleConfig pydantic model, ClassificationBatch TypedDict, test conftest fixtures
+- [x] 01-03-PLAN.md — ImageFolderDataModule: JerseyNumberDataset, JSONL parsing, transforms, WeightedRandomSampler, labels_mapping.json
 
 ### Phase 2: Model Layer
 
@@ -167,7 +167,7 @@ Each phase is a strict dependency of the next. The import graph enforces this or
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation and Data Pipeline | 0/3 | Not started | - |
+| 1. Foundation and Data Pipeline | 3/3 | ✓ Complete | 2026-02-18 |
 | 2. Model Layer | 0/2 | Not started | - |
 | 3. Callbacks and ONNX Export | 0/3 | Not started | - |
 | 4. Training Configuration | 0/2 | Not started | - |

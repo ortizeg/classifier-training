@@ -9,27 +9,27 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Project Foundation
 
-- [ ] **FOUND-01**: Pixi environment with Python 3.11, conda-forge channel, osx-arm64 + linux-64 platforms
-- [ ] **FOUND-02**: src layout (`src/classifier_training/`) with flit_core build system
-- [ ] **FOUND-03**: Ruff linting and formatting with strict rules matching sibling repo
-- [ ] **FOUND-04**: MyPy strict type checking with third-party ignore overrides
-- [ ] **FOUND-05**: Pre-commit hooks (trailing whitespace, ruff, ruff-format, large files, secrets)
-- [ ] **FOUND-06**: Pytest test suite with coverage reporting
-- [ ] **FOUND-07**: Pydantic v2 frozen models for configuration validation
-- [ ] **FOUND-08**: Loguru structured logging throughout (replaces stdlib logging)
-- [ ] **FOUND-09**: Reproducibility seed via `lightning.seed_everything`
+- [x] **FOUND-01**: Pixi environment with Python 3.11, conda-forge channel, osx-arm64 + linux-64 platforms
+- [x] **FOUND-02**: src layout (`src/classifier_training/`) with flit_core build system
+- [x] **FOUND-03**: Ruff linting and formatting with strict rules matching sibling repo
+- [x] **FOUND-04**: MyPy strict type checking with third-party ignore overrides
+- [x] **FOUND-05**: Pre-commit hooks (trailing whitespace, ruff, ruff-format, large files, secrets)
+- [x] **FOUND-06**: Pytest test suite with coverage reporting
+- [x] **FOUND-07**: Pydantic v2 frozen models for configuration validation
+- [x] **FOUND-08**: Loguru structured logging throughout (replaces stdlib logging)
+- [x] **FOUND-09**: Reproducibility seed via `lightning.seed_everything`
 
 ### Data Pipeline
 
-- [ ] **DATA-01**: ImageFolder-compatible DataModule with train/val/test splits and configurable transforms
-- [ ] **DATA-02**: JSONL annotation support for datasets using `annotations.jsonl` format (basketball-jersey-numbers-ocr)
-- [ ] **DATA-03**: Strictly separated transform pipelines — train (augmentation) vs val/test (resize + normalize only)
-- [ ] **DATA-04**: Standard augmentation pipeline: RandomResizedCrop, RandomHorizontalFlip, ColorJitter, Normalize
-- [ ] **DATA-05**: Val/test transforms: Resize, CenterCrop, Normalize with ImageNet statistics
-- [ ] **DATA-06**: `class_to_idx` mapping persisted as `labels_mapping.json` alongside model exports
-- [ ] **DATA-07**: Class weight tensor computed from training split for weighted loss
-- [ ] **DATA-08**: WeightedRandomSampler for class imbalance handling
-- [ ] **DATA-09**: Configurable num_workers, pin_memory, persistent_workers for DataLoader
+- [x] **DATA-01**: ImageFolder-compatible DataModule with train/val/test splits and configurable transforms
+- [x] **DATA-02**: JSONL annotation support for datasets using `annotations.jsonl` format (basketball-jersey-numbers-ocr)
+- [x] **DATA-03**: Strictly separated transform pipelines — train (augmentation) vs val/test (resize + normalize only)
+- [x] **DATA-04**: Standard augmentation pipeline: RandomResizedCrop, RandomHorizontalFlip, ColorJitter, Normalize
+- [x] **DATA-05**: Val/test transforms: Resize, CenterCrop, Normalize with ImageNet statistics
+- [x] **DATA-06**: `class_to_idx` mapping persisted as `labels_mapping.json` alongside model exports
+- [x] **DATA-07**: Class weight tensor computed from training split for weighted loss
+- [x] **DATA-08**: WeightedRandomSampler for class imbalance handling
+- [x] **DATA-09**: Configurable num_workers, pin_memory, persistent_workers for DataLoader
 
 ### Model
 
@@ -125,24 +125,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | Phase 1 | Pending |
-| FOUND-02 | Phase 1 | Pending |
-| FOUND-03 | Phase 1 | Pending |
-| FOUND-04 | Phase 1 | Pending |
-| FOUND-05 | Phase 1 | Pending |
-| FOUND-06 | Phase 1 | Pending |
-| FOUND-07 | Phase 1 | Pending |
-| FOUND-08 | Phase 1 | Pending |
-| FOUND-09 | Phase 1 | Pending |
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
-| DATA-05 | Phase 1 | Pending |
-| DATA-06 | Phase 1 | Pending |
-| DATA-07 | Phase 1 | Pending |
-| DATA-08 | Phase 1 | Pending |
-| DATA-09 | Phase 1 | Pending |
+| FOUND-01 | Phase 1 | Complete |
+| FOUND-02 | Phase 1 | Complete |
+| FOUND-03 | Phase 1 | Complete |
+| FOUND-04 | Phase 1 | Complete |
+| FOUND-05 | Phase 1 | Complete |
+| FOUND-06 | Phase 1 | Complete |
+| FOUND-07 | Phase 1 | Complete |
+| FOUND-08 | Phase 1 | Complete |
+| FOUND-09 | Phase 1 | Complete |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
+| DATA-04 | Phase 1 | Complete |
+| DATA-05 | Phase 1 | Complete |
+| DATA-06 | Phase 1 | Complete |
+| DATA-07 | Phase 1 | Complete |
+| DATA-08 | Phase 1 | Complete |
+| DATA-09 | Phase 1 | Complete |
 | MODEL-01 | Phase 2 | Pending |
 | MODEL-02 | Phase 2 | Pending |
 | MODEL-03 | Phase 2 | Pending |
