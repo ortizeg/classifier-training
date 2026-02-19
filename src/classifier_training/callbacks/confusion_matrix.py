@@ -44,6 +44,21 @@ class ConfusionMatrixCallback(L.Callback):
         self._cm = MulticlassConfusionMatrix(
             num_classes=self.num_classes
         ).to(pl_module.device)
+
+        # Auto-detect class names from datamodule if not explicitly provided
+        if self.class_names is None:
+            datamodule = getattr(trainer, "datamodule", None)
+            if datamodule is not None and hasattr(datamodule, "class_to_idx"):
+                c2i: dict[str, int] = datamodule.class_to_idx
+                # Build ordered list: idx -> class name
+                self.class_names = [
+                    name for name, _ in sorted(c2i.items(), key=lambda x: x[1])
+                ]
+                logger.info(
+                    f"ConfusionMatrixCallback: auto-detected {len(self.class_names)} "
+                    "class names from datamodule"
+                )
+
         logger.info(
             f"ConfusionMatrixCallback: initialized on {pl_module.device}"
         )
@@ -105,7 +120,10 @@ class ConfusionMatrixCallback(L.Callback):
 
         cm_np = cm.numpy()
 
-        fig, ax = plt.subplots(figsize=(12, 10))
+        # Scale figure size with number of classes for readability
+        n = cm_np.shape[0]
+        fig_size = max(12, n * 0.35)
+        fig, ax = plt.subplots(figsize=(fig_size, fig_size * 0.85))
         im = ax.imshow(cm_np, interpolation="nearest", cmap="Blues")
         fig.colorbar(im, ax=ax)
 
@@ -113,12 +131,13 @@ class ConfusionMatrixCallback(L.Callback):
         ax.set_xlabel("Predicted")
         ax.set_ylabel("True")
 
-        if self.class_names is not None:
-            tick_marks = list(range(len(self.class_names)))
-            ax.set_xticks(tick_marks)
-            ax.set_xticklabels(self.class_names, rotation=45, ha="right")
-            ax.set_yticks(tick_marks)
-            ax.set_yticklabels(self.class_names)
+        # Always label axes — use class names if available, else integers
+        labels = self.class_names or [str(i) for i in range(n)]
+        tick_marks = list(range(n))
+        ax.set_xticks(tick_marks)
+        ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
+        ax.set_yticks(tick_marks)
+        ax.set_yticklabels(labels, fontsize=8)
 
         fig.tight_layout()
         save_path = save_dir / "confusion_matrix.png"
