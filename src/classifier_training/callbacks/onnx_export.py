@@ -17,6 +17,8 @@ import lightning as L
 import torch
 from loguru import logger
 
+from classifier_training.callbacks.ema import EMACallback
+
 
 class ONNXExportCallback(L.Callback):
     """Export the model to ONNX at the end of training.
@@ -49,8 +51,6 @@ class ONNXExportCallback(L.Callback):
         self, trainer: L.Trainer, pl_module: L.LightningModule
     ) -> None:
         """Export the model to ONNX at end of training."""
-        from classifier_training.callbacks.ema import EMACallback
-
         output_path = Path(self.output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
         onnx_path = output_path / "model.onnx"

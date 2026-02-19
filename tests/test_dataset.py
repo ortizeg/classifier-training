@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 import torch
+from torchvision.transforms import v2
 
 from classifier_training.data.dataset import JerseyNumberDataset
 
@@ -40,8 +41,6 @@ class TestJerseyNumberDataset:
     def test_getitem_with_transform_returns_tensor(
         self, tmp_dataset_dir: Path, class_to_idx: dict[str, int]
     ) -> None:
-        from torchvision.transforms import v2
-
         transform = v2.Compose([
             v2.ToImage(),
             v2.ToDtype(torch.float32, scale=True),

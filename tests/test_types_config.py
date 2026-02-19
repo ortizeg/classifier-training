@@ -1,6 +1,7 @@
 """Unit tests for classifier_training.types and classifier_training.config."""
 
 import pytest
+import torch
 from pydantic import ValidationError
 
 from classifier_training.config import DataModuleConfig
@@ -62,8 +63,6 @@ class TestDataModuleConfig:
 class TestClassificationBatchType:
     def test_typed_dict_keys(self) -> None:
         """ClassificationBatch has exactly 'images' and 'labels' keys."""
-        import torch
-
         batch: ClassificationBatch = {
             "images": torch.zeros(4, 3, 224, 224),
             "labels": torch.zeros(4, dtype=torch.long),

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import classifier_training.models  # noqa: F401
 import lightning as L
 import pytest
 import torch
+from hydra.core.config_store import ConfigStore
 
 from classifier_training.models import (
     ResNet18ClassificationModel,
@@ -312,10 +314,6 @@ class TestOptimizerScheduler:
 class TestHydraRegistration:
     def test_resnet18_registered(self) -> None:
         """@register stores ResNet18 in ConfigStore model."""
-        from hydra.core.config_store import ConfigStore
-
-        import classifier_training.models  # noqa: F401
-
         cs = ConfigStore.instance()
         models_group = cs.repo.get("model", {})
         names = [k.replace(".yaml", "") for k in models_group]
@@ -325,10 +323,6 @@ class TestHydraRegistration:
 
     def test_resnet50_registered(self) -> None:
         """@register stores ResNet50 in ConfigStore model."""
-        from hydra.core.config_store import ConfigStore
-
-        import classifier_training.models  # noqa: F401
-
         cs = ConfigStore.instance()
         models_group = cs.repo.get("model", {})
         names = [k.replace(".yaml", "") for k in models_group]

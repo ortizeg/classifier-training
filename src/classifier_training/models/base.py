@@ -6,6 +6,7 @@ from typing import Any
 
 import lightning as L
 import torch
+from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 from torchmetrics.classification import MulticlassAccuracy
 
 from classifier_training.types import ClassificationBatch
@@ -146,12 +147,6 @@ class BaseClassificationModel(L.LightningModule):
         self.test_per_cls.reset()
 
     def configure_optimizers(self) -> dict[str, Any]:  # type: ignore[override]
-        from torch.optim.lr_scheduler import (
-            CosineAnnealingLR,
-            LinearLR,
-            SequentialLR,
-        )
-
         optimizer = torch.optim.AdamW(
             self.parameters(),
             lr=self.hparams["learning_rate"],
