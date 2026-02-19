@@ -61,19 +61,22 @@ def main(cfg: DictConfig) -> None:
     class_weights = datamodule.get_class_weights()  # type: ignore[attr-defined]
     model.set_class_weights(class_weights)  # type: ignore[operator]
 
-    # Instantiate callbacks
-    callbacks: list[L.Callback] = []
-    if cfg.get("callbacks"):
-        for v in cfg.callbacks.values():
-            if v is not None and "_target_" in v:
-                callbacks.append(hydra.utils.instantiate(v))
-
     # Instantiate loggers
     loggers: list[Any] = []
     if cfg.get("logging"):
         for v in cfg.logging.values():
             if v is not None and "_target_" in v:
                 loggers.append(hydra.utils.instantiate(v))
+
+    # Instantiate callbacks (skip LearningRateMonitor when no logger is configured)
+    callbacks: list[L.Callback] = []
+    if cfg.get("callbacks"):
+        for v in cfg.callbacks.values():
+            if v is not None and "_target_" in v:
+                if not loggers and "LearningRateMonitor" in v["_target_"]:
+                    logger.warning("Skipping LearningRateMonitor: no logger configured")
+                    continue
+                callbacks.append(hydra.utils.instantiate(v))
 
     # Build Trainer from config dict (NOT via hydra.utils.instantiate --
     # trainer config has no _target_ key)

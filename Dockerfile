@@ -35,4 +35,4 @@ COPY . .
 # environment variables at container run time, NOT baked into the image.
 
 # Set entrypoint to run the training task defined in pixi.toml
-ENTRYPOINT ["pixi", "run", "train"]
+ENTRYPOINT ["pixi", "run", "task_manager"]
