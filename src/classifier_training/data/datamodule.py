@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 import lightning as L
 import torch
@@ -35,17 +36,46 @@ class ImageFolderDataModule(L.LightningDataModule):
 
     Args:
         config: DataModuleConfig frozen model with all DataLoader parameters.
+            If provided, flat kwargs are ignored.
+        data_root: Path to dataset root (used when config is None, e.g. Hydra).
+        batch_size: Batch size for DataLoaders (default: 32).
+        num_workers: Number of DataLoader workers (default: 4).
+        pin_memory: Whether to pin memory (default: True).
+        persistent_workers: Keep workers alive between epochs (default: True).
+        image_size: Input image size for transforms (default: 224).
+        **kwargs: Absorbs extra Hydra-injected keys (_target_, _recursive_, etc.).
     """
 
-    def __init__(self, config: DataModuleConfig) -> None:
+    def __init__(
+        self,
+        config: DataModuleConfig | None = None,
+        *,
+        data_root: str = "",
+        batch_size: int = 32,
+        num_workers: int = 4,
+        pin_memory: bool = True,
+        persistent_workers: bool = True,
+        image_size: int = 224,
+        **kwargs: Any,
+    ) -> None:
         super().__init__()
-        self._config = config
-        self._data_root = Path(config.data_root)
+        if config is not None:
+            self._config = config
+        else:
+            self._config = DataModuleConfig(
+                data_root=data_root,
+                batch_size=batch_size,
+                num_workers=num_workers,
+                pin_memory=pin_memory,
+                persistent_workers=persistent_workers,
+                image_size=image_size,
+            )
+        self._data_root = Path(self._config.data_root)
 
         # MPS guard: multiprocessing DataLoader workers crash on Apple Silicon.
         # Detect at construction time and override num_workers.
         # Per research/sibling pattern — must set num_workers=0 on MPS.
-        num_workers = config.num_workers
+        num_workers = self._config.num_workers
         if torch.backends.mps.is_available() and num_workers > 0:
             logger.warning(
                 "MPS detected: setting num_workers=0 to avoid multiprocessing "
@@ -54,11 +84,11 @@ class ImageFolderDataModule(L.LightningDataModule):
             num_workers = 0
 
         self._num_workers = num_workers
-        self._pin_memory = config.pin_memory
+        self._pin_memory = self._config.pin_memory
         # persistent_workers is meaningless (and silently ignored) with 0 workers
-        self._persistent_workers = config.persistent_workers and num_workers > 0
-        self._batch_size = config.batch_size
-        self._image_size = config.image_size
+        self._persistent_workers = self._config.persistent_workers and num_workers > 0
+        self._batch_size = self._config.batch_size
+        self._image_size = self._config.image_size
 
         self._class_to_idx: dict[str, int] | None = None
         self._train_dataset: JerseyNumberDataset | None = None
