@@ -10,6 +10,7 @@ from hydra.core.config_store import ConfigStore
 
 from classifier_training.models import (
     ResNet18ClassificationModel,
+    ResNet34ClassificationModel,
     ResNet50ClassificationModel,
 )
 from classifier_training.types import ClassificationBatch
@@ -40,6 +41,11 @@ def batch_43cls() -> ClassificationBatch:
 @pytest.fixture()
 def resnet18_3cls() -> ResNet18ClassificationModel:
     return ResNet18ClassificationModel(num_classes=3, pretrained=False)
+
+
+@pytest.fixture()
+def resnet34_3cls() -> ResNet34ClassificationModel:
+    return ResNet34ClassificationModel(num_classes=3, pretrained=False)
 
 
 @pytest.fixture()
@@ -149,6 +155,30 @@ class TestResNet18ForwardPass:
         assert isinstance(loss, torch.Tensor)
         assert loss.ndim == 0  # scalar
         assert torch.isfinite(loss)
+
+
+# ---------------------------------------------------------------------------
+# ResNet34: forward pass and loss
+# ---------------------------------------------------------------------------
+
+
+class TestResNet34ForwardPass:
+    def test_forward_shape_3cls(
+        self,
+        resnet34_3cls: ResNet34ClassificationModel,
+        batch_3cls: ClassificationBatch,
+    ) -> None:
+        logits = resnet34_3cls(batch_3cls["images"])
+        assert logits.shape == (4, 3)
+
+    def test_loss_is_finite(
+        self,
+        resnet34_3cls: ResNet34ClassificationModel,
+        batch_3cls: ClassificationBatch,
+    ) -> None:
+        logits = resnet34_3cls(batch_3cls["images"])
+        loss = resnet34_3cls.loss_fn(logits, batch_3cls["labels"])
+        assert torch.isfinite(loss).all()
 
 
 # ---------------------------------------------------------------------------
@@ -319,6 +349,15 @@ class TestHydraRegistration:
         names = [k.replace(".yaml", "") for k in models_group]
         assert "resnet18" in names, (
             f"resnet18 not in ConfigStore model: {names}"
+        )
+
+    def test_resnet34_registered(self) -> None:
+        """@register stores ResNet34 in ConfigStore model."""
+        cs = ConfigStore.instance()
+        models_group = cs.repo.get("model", {})
+        names = [k.replace(".yaml", "") for k in models_group]
+        assert "resnet34" in names, (
+            f"resnet34 not in ConfigStore model: {names}"
         )
 
     def test_resnet50_registered(self) -> None:
