@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 import torch
-from torch.utils.data import WeightedRandomSampler
+from torch.utils.data import RandomSampler, WeightedRandomSampler
 
 from classifier_training.config import DataModuleConfig
 from classifier_training.data import ImageFolderDataModule
@@ -45,21 +45,26 @@ class TestImageFolderDataModuleSynthetic:
         assert dm._test_dataset is not None
         assert dm._train_dataset is None
 
-    def test_train_dataloader_uses_weighted_sampler_not_shuffle(
+    def test_train_dataloader_default_disabled_uses_shuffle(
         self, tmp_dataset_dir: Path
     ) -> None:
-        """WeightedRandomSampler must be used; shuffle must be False.
-
-        Setting shuffle=True alongside a sampler raises ValueError in PyTorch.
-        """
+        """Default sampler mode is disabled — DataLoader uses shuffle=True."""
         cfg = DataModuleConfig(data_root=str(tmp_dataset_dir), num_workers=0)
         dm = ImageFolderDataModule(cfg)
         dm.setup("fit")
         loader = dm.train_dataloader()
+        assert isinstance(loader.sampler, RandomSampler)
+
+    def test_train_dataloader_auto_sampler_uses_weighted_sampler(
+        self, tmp_dataset_dir: Path
+    ) -> None:
+        """When sampler mode is auto, WeightedRandomSampler must be used."""
+        cfg = DataModuleConfig(data_root=str(tmp_dataset_dir), num_workers=0)
+        dm = ImageFolderDataModule(cfg, sampler={"mode": "auto"})
+        dm.setup("fit")
+        loader = dm.train_dataloader()
         assert loader.sampler is not None
         assert isinstance(loader.sampler, WeightedRandomSampler)
-        # DataLoader.shuffle is not an attribute — verify via batch_sampler
-        assert not isinstance(loader.batch_sampler, torch.utils.data.RandomSampler)
 
     def test_val_dataloader_has_no_sampler(self, tmp_dataset_dir: Path) -> None:
         cfg = DataModuleConfig(data_root=str(tmp_dataset_dir), num_workers=0)

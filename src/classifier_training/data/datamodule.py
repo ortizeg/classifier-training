@@ -12,7 +12,11 @@ from torchvision.transforms import v2
 
 from classifier_training.config import DataModuleConfig
 from classifier_training.data.dataset import JerseyNumberDataset
-from classifier_training.data.sampler import TrackingWeightedRandomSampler
+from classifier_training.data.sampler import (
+    SamplerConfig,
+    TrackingWeightedRandomSampler,
+    build_sampler,
+)
 from classifier_training.types import ClassificationBatch
 
 # ImageNet normalization statistics — stored here and written to labels_mapping.json.
@@ -60,6 +64,7 @@ class ImageFolderDataModule(L.LightningDataModule):
         train_transforms: v2.Compose | None = None,
         val_transforms: v2.Compose | None = None,
         test_transforms: v2.Compose | None = None,
+        sampler: dict[str, Any] | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__()
@@ -75,6 +80,9 @@ class ImageFolderDataModule(L.LightningDataModule):
                 image_size=image_size,
             )
         self._data_root = Path(self._config.data_root)
+
+        # Parse sampler config from dict (Hydra passes dicts)
+        self._sampler_config = SamplerConfig(**(sampler or {}))
 
         # Optional pre-built transform pipelines (from Hydra config).
         # When provided, these override the internal _build_*_transforms() methods.
@@ -254,26 +262,18 @@ class ImageFolderDataModule(L.LightningDataModule):
         """
         return self._compute_class_weights()
 
-    def _build_sampler(self) -> TrackingWeightedRandomSampler:
-        """Per-sample weight sampler for WeightedRandomSampler.
+    def _build_sampler(self) -> TrackingWeightedRandomSampler | None:
+        """Build sampler based on SamplerConfig.
 
-        Uses inverse class frequency: rare classes get higher per-sample weight.
-        replacement=True required — samples may repeat within an epoch.
+        Returns TrackingWeightedRandomSampler for auto/manual modes, None for disabled.
 
-        IMPORTANT: DataLoader using this sampler MUST set shuffle=False.
+        IMPORTANT: DataLoader using a sampler MUST set shuffle=False.
         shuffle=True + sampler raises ValueError in PyTorch DataLoader.
         """
         if self._train_dataset is None:
             raise RuntimeError("Call setup('fit') before _build_sampler")
-        class_weights = self._compute_class_weights()
-        sample_weights = [
-            class_weights[label].item() for _, label in self._train_dataset.samples
-        ]
-        return TrackingWeightedRandomSampler(
-            weights=sample_weights,
-            num_samples=len(sample_weights),
-            replacement=True,
-        )
+        labels = [label for _, label in self._train_dataset.samples]
+        return build_sampler(self._sampler_config, labels, self.class_to_idx)
 
     # ------------------------------------------------------------------
     # Collate — converts (image, label) tuples to ClassificationBatch dict
@@ -298,15 +298,16 @@ class ImageFolderDataModule(L.LightningDataModule):
     # ------------------------------------------------------------------
 
     def train_dataloader(self) -> DataLoader[tuple[torch.Tensor, int]]:
-        """Return training DataLoader with WeightedRandomSampler."""
+        """Return training DataLoader, optionally with WeightedRandomSampler."""
         if self._train_dataset is None:
             raise RuntimeError("Call setup('fit') first")
         sampler = self._build_sampler()
+        use_shuffle = sampler is None  # shuffle=True only when no sampler
         return DataLoader(
             self._train_dataset,
             batch_size=self._batch_size,
             sampler=sampler,
-            shuffle=False,  # MUST be False when sampler provided — mutually exclusive
+            shuffle=use_shuffle,
             num_workers=self._num_workers,
             pin_memory=self._pin_memory,
             persistent_workers=self._persistent_workers,

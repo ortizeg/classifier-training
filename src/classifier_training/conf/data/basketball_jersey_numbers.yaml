@@ -5,3 +5,5 @@ num_workers: 4
 pin_memory: true
 persistent_workers: true
 image_size: 224
+sampler:
+  mode: disabled
