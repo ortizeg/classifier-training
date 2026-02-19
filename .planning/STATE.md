@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Train image classifiers with the same production-quality infrastructure, reproducibility, and cloud deployment workflow established in the object-detection-training repository — configurable via Hydra YAML, with full training observability through callbacks.
-**Current focus:** Phase 4 COMPLETE -- Hydra training config wired, WandB logging, 101 tests passing. Ready for Phase 5 (Cloud Training).
+**Current focus:** Phase 5 Plan 02 COMPLETE -- GitHub CI/CD workflows, templates, CODEOWNERS, develop branch. Pending: branch protection (human action), GitHub remote setup.
 
 ## Current Position
 
-Phase: 4 of 5 (Training Configuration) -- COMPLETE
-Plan: 2 of 2 in current phase -- COMPLETE
-Status: Phase 4 complete, ready for Phase 5
-Last activity: 2026-02-18 — Plan 04-02 complete: WandB image logging and 11 config validation tests, 101 tests passing
+Phase: 5 of 5 (Infrastructure) -- IN PROGRESS
+Plan: 2 of 2 in current phase -- COMPLETE (pending human action: branch protection)
+Status: Phase 5 plan 02 complete; branch protection requires manual GitHub UI configuration
+Last activity: 2026-02-19 — Plan 05-02 complete: 3 CI/CD workflows, 4 templates/CODEOWNERS, develop branch created
 
-Progress: [█████████░] 90%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 3.7 min
-- Total execution time: 0.62 hours
+- Total plans completed: 11
+- Average duration: 3.5 min
+- Total execution time: 0.65 hours
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [█████████░] 90%
 | 02-model-layer | 2/2 | 7 min | 3.5 min |
 | 03-callbacks-and-onnx-export | 3/3 | 13 min | 4.3 min |
 | 04-training-configuration | 2/2 | 6 min | 3.0 min |
+| 05-infrastructure | 2/2 | 4 min | 2.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (6 min), 03-02 (4 min), 03-03 (3 min), 04-01 (4 min), 04-02 (2 min)
-- Trend: stable
+- Last 5 plans: 03-03 (3 min), 04-01 (4 min), 04-02 (2 min), 05-01 (2 min), 05-02 (2 min)
+- Trend: stable/fast
 
 *Updated after each plan completion*
 
@@ -82,19 +83,25 @@ Recent decisions affecting current work:
 - [04-01]: conf/model/ (singular) not conf/models/ -- Hydra requires exact match between directory name and defaults list key
 - [Phase 04]: Factory fixture for Hydra override tests -- avoids GlobalHydra conflicts between compose calls
 - [Phase 04]: pretrained=False override in model instantiation tests -- avoids weight downloads in CI
+- [05-02]: Workflows ported identically from object-detection-training sibling repo — same action versions, same CUDA override, same pixi integration
+- [05-02]: CODEOWNERS references classifier_training (not object_detection_training) for conf/ path
+- [05-02]: develop branch created locally only — no remote configured; push deferred until GitHub repo is set up
+- [05-02]: Branch protection (Task 4) requires human action via GitHub Settings UI — not automatable
 
 ### Pending Todos
 
-None yet.
+- Configure GitHub remote: `git remote add origin <url> && git push -u origin main && git push -u origin develop`
+- Configure branch protection on main and develop (see 05-02-SUMMARY.md for detailed steps)
 
 ### Blockers/Concerns
 
 - [Research]: EMA + ModelCheckpoint timing interaction (Lightning issue #11276) — plan-phase for Phase 3 should trace hook ordering before implementation
 - [Research]: AMP stability on T4 with classification (`clip_val=1.0` vs `clip_val=5.0`) requires empirical smoke run in Phase 4 — plan for it explicitly
 - [Resolved]: Actual basketball jersey numbers dataset class distribution characterized — 43 classes, '' at idx 0, 2930 train rows, 372 val rows, 365 test rows
+- [Human Action Required]: Branch protection on main and develop — configure via GitHub Settings UI after remote is set up
 
 ## Session Continuity
 
-Last session: 2026-02-18
-Stopped at: Completed 04-02-PLAN.md -- Phase 4 complete, 101 tests passing, ready for Phase 5
+Last session: 2026-02-19
+Stopped at: Completed 05-02-PLAN.md -- Phase 5 complete (plan 2/2), 7 CI/CD files created, develop branch exists locally, branch protection requires human action
 Resume file: None
