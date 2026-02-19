@@ -33,15 +33,15 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Model
 
-- [ ] **MODEL-01**: ResNet18 model with pretrained ImageNet weights via torchvision `weights=ResNet18_Weights.DEFAULT`
-- [ ] **MODEL-02**: ResNet50 model with pretrained ImageNet weights via torchvision `weights=ResNet50_Weights.DEFAULT`
-- [ ] **MODEL-03**: Base classification LightningModule with torchmetrics (auto device placement)
-- [ ] **MODEL-04**: CrossEntropyLoss with configurable `class_weight` tensor and `label_smoothing`
-- [ ] **MODEL-05**: Top-1 accuracy, Top-5 accuracy, per-class accuracy metrics via torchmetrics
-- [ ] **MODEL-06**: Consistent TorchMetrics logging pattern (Pattern A: update/compute/reset)
-- [ ] **MODEL-07**: AdamW optimizer with configurable learning rate (default lr=1e-4 for fine-tuning)
-- [ ] **MODEL-08**: CosineAnnealingLR scheduler with linear warmup
-- [ ] **MODEL-09**: Hydra config YAMLs for ResNet18 and ResNet50 with tuned hyperparameters
+- [x] **MODEL-01**: ResNet18 model with pretrained ImageNet weights via torchvision `weights=ResNet18_Weights.DEFAULT`
+- [x] **MODEL-02**: ResNet50 model with pretrained ImageNet weights via torchvision `weights=ResNet50_Weights.DEFAULT`
+- [x] **MODEL-03**: Base classification LightningModule with torchmetrics (auto device placement)
+- [x] **MODEL-04**: CrossEntropyLoss with configurable `class_weight` tensor and `label_smoothing`
+- [x] **MODEL-05**: Top-1 accuracy, Top-5 accuracy, per-class accuracy metrics via torchmetrics
+- [x] **MODEL-06**: Consistent TorchMetrics logging pattern (Pattern A: update/compute/reset)
+- [x] **MODEL-07**: AdamW optimizer with configurable learning rate (default lr=1e-4 for fine-tuning)
+- [x] **MODEL-08**: CosineAnnealingLR scheduler with linear warmup
+- [x] **MODEL-09**: Hydra config YAMLs for ResNet18 and ResNet50 with tuned hyperparameters
 
 ### Callbacks
 
@@ -143,15 +143,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-07 | Phase 1 | Complete |
 | DATA-08 | Phase 1 | Complete |
 | DATA-09 | Phase 1 | Complete |
-| MODEL-01 | Phase 2 | Pending |
-| MODEL-02 | Phase 2 | Pending |
-| MODEL-03 | Phase 2 | Pending |
-| MODEL-04 | Phase 2 | Pending |
-| MODEL-05 | Phase 2 | Pending |
-| MODEL-06 | Phase 2 | Pending |
-| MODEL-07 | Phase 2 | Pending |
-| MODEL-08 | Phase 2 | Pending |
-| MODEL-09 | Phase 2 | Pending |
+| MODEL-01 | Phase 2 | Complete |
+| MODEL-02 | Phase 2 | Complete |
+| MODEL-03 | Phase 2 | Complete |
+| MODEL-04 | Phase 2 | Complete |
+| MODEL-05 | Phase 2 | Complete |
+| MODEL-06 | Phase 2 | Complete |
+| MODEL-07 | Phase 2 | Complete |
+| MODEL-08 | Phase 2 | Complete |
+| MODEL-09 | Phase 2 | Complete |
 | CALL-01 | Phase 3 | Pending |
 | CALL-02 | Phase 3 | Pending |
 | CALL-03 | Phase 3 | Pending |

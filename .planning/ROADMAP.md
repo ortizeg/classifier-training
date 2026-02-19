@@ -13,7 +13,7 @@ A production-ready image classification training framework built to mirror the s
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation and Data Pipeline** - Project scaffold, data module, transforms, class imbalance handling ✓ (2026-02-18)
-- [ ] **Phase 2: Model Layer** - ResNet backbones, LightningModule, metrics, optimizer, scheduler
+- [x] **Phase 2: Model Layer** - ResNet backbones, LightningModule, metrics, optimizer, scheduler ✓ (2026-02-18)
 - [ ] **Phase 3: Callbacks and ONNX Export** - All callbacks including EMA, ONNX export, confusion matrix
 - [ ] **Phase 4: Training Configuration** - Hydra configs, WandB, trainer defaults, checkpoint resume
 - [ ] **Phase 5: Infrastructure** - Docker, GCP Cloud Build, GitHub Actions CI, semantic release
@@ -59,8 +59,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Infrastructure (hydra-core in pixi.toml, @register decorator), BaseClassificationModel with CrossEntropyLoss buffer, Pattern A torchmetrics, AdamW + SequentialLR
-- [ ] 02-02-PLAN.md — ResNet18ClassificationModel and ResNet50ClassificationModel (torchvision pretrained, @register), Hydra YAML configs, full test suite (test_model.py)
+- [x] 02-01-PLAN.md — Infrastructure (hydra-core in pixi.toml, @register decorator), BaseClassificationModel with CrossEntropyLoss buffer, Pattern A torchmetrics, AdamW + SequentialLR
+- [x] 02-02-PLAN.md — ResNet18ClassificationModel and ResNet50ClassificationModel (torchvision pretrained, @register), Hydra YAML configs, full test suite (test_model.py)
 
 ### Phase 3: Callbacks and ONNX Export
 
@@ -168,11 +168,11 @@ Each phase is a strict dependency of the next. The import graph enforces this or
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation and Data Pipeline | 3/3 | ✓ Complete | 2026-02-18 |
-| 2. Model Layer | 0/2 | Not started | - |
+| 2. Model Layer | 2/2 | ✓ Complete | 2026-02-18 |
 | 3. Callbacks and ONNX Export | 0/3 | Not started | - |
 | 4. Training Configuration | 0/2 | Not started | - |
 | 5. Infrastructure | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-18*
-*Last updated: 2026-02-18 — Phase 2 plans created (02-01, 02-02)*
+*Last updated: 2026-02-18 — Phase 2 complete (2/2 plans, 55 tests, verified 7/7)*
