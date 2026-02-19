@@ -10,6 +10,9 @@ authors = [{name = "Enrique G. Ortiz", email = "ortizeg@gmail.com"}]
 license = {text = "Apache-2.0"}
 dependencies = [
     "lightning",
+    "hydra-core",
+    "omegaconf",
+    "torchmetrics",
     "loguru",
     "numpy<2.0.0",
     "pydantic>=2.0",
@@ -62,5 +65,8 @@ module = [
     "loguru.*",
     "numpy.*",
     "rich.*",
+    "hydra.*",
+    "omegaconf.*",
+    "torchmetrics.*",
 ]
 ignore_missing_imports = true
