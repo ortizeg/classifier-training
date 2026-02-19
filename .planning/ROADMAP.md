@@ -77,12 +77,12 @@ Plans:
   4. Class distribution table is printed at training start by `DatasetStatisticsCallback`
   5. `SamplerDistributionCallback` logs class sample counts to confirm `WeightedRandomSampler` is balancing the training batches
 
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 03-01: EMA, ModelCheckpoint, ONNX export — port EMA from sibling, adapt ONNX export to logits output and EMA state dict, integration test
-- [ ] 03-02: Observability callbacks — ConfusionMatrixCallback (new), DatasetStatisticsCallback, TrainingHistoryCallback, ModelInfoCallback, SamplerDistributionCallback, SampleVisualizationCallback
-- [ ] 03-03: Lightning built-in callbacks — RichProgressBar, LRMonitor, EarlyStopping — wired into Hydra default callback config
+- [ ] 03-01-PLAN.md — Dependencies + EMACallback + ONNXExportCallback + TrackingWeightedRandomSampler + tests
+- [ ] 03-02-PLAN.md — Observability callbacks (ConfusionMatrix, DatasetStats, ModelInfo, TrainingHistory, SamplerDist, SampleViz) + tests
+- [ ] 03-03-PLAN.md — Hydra conf/callbacks/default.yaml (all 12 callbacks) + integration test
 
 ### Phase 4: Training Configuration
 
