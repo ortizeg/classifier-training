@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-18)
 
 **Core value:** Train image classifiers with the same production-quality infrastructure, reproducibility, and cloud deployment workflow established in the object-detection-training repository — configurable via Hydra YAML, with full training observability through callbacks.
-**Current focus:** Phase 2 in progress — BaseClassificationModel complete, ready for Plan 02-02 (concrete ResNet models)
+**Current focus:** Phase 2 complete — BaseClassificationModel + ResNet18/50 models + Hydra configs + 55 tests. Ready for Phase 3 (Training Pipeline).
 
 ## Current Position
 
-Phase: 2 of 5 (Model Layer)
-Plan: 1 of 2 in current phase — COMPLETE
-Status: Plan 02-01 complete, ready for Plan 02-02
-Last activity: 2026-02-18 — Plan 02-01 complete: BaseClassificationModel, @register decorator, hydra-core/torchmetrics deps
+Phase: 2 of 5 (Model Layer) -- COMPLETE
+Plan: 2 of 2 in current phase -- COMPLETE
+Status: Phase 2 complete, ready for Phase 3
+Last activity: 2026-02-18 — Plan 02-02 complete: ResNet18/50 models, Hydra YAML configs, 21-test model suite
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 3.5 min
-- Total execution time: 0.23 hours
+- Total plans completed: 5
+- Average duration: 3.6 min
+- Total execution time: 0.30 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-and-data-pipeline | 3/3 | 11 min | 3.7 min |
-| 02-model-layer | 1/2 | 3 min | 3.0 min |
+| 02-model-layer | 2/2 | 7 min | 3.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 01-03 (4 min), 02-01 (3 min)
+- Last 5 plans: 01-02 (4 min), 01-03 (4 min), 02-01 (3 min), 02-02 (4 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -61,6 +61,9 @@ Recent decisions affecting current work:
 - [01-03]: '' (empty-string class) legitimately at index 0 — sorted(['', '0', ...]) places '' first; represents unreadable jersey numbers
 - [Phase 02]: Explicit class_weights: torch.Tensor annotation on class to satisfy mypy strict with register_buffer
 - [Phase 02]: Copied only @register decorator from sibling repo, not instantiate_* helpers
+- [02-02]: **kwargs: Any (not object) for Hydra forwarded params -- mypy strict rejects **dict[str, object] for typed params
+- [02-02]: ConfigStore repo is a plain dict in hydra-core 1.3.x -- use cs.repo.get() not cs.repo.list()
+- [02-02]: pretrained=False parameter pattern for test usage -- avoids 44-98MB downloads in CI
 
 ### Pending Todos
 
@@ -75,5 +78,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-18
-Stopped at: Completed 02-01-PLAN.md — BaseClassificationModel, @register decorator, hydra-core/torchmetrics deps added
+Stopped at: Completed 02-02-PLAN.md — Phase 2 complete. ResNet18/50 models, Hydra configs, 55 total tests passing.
 Resume file: None
