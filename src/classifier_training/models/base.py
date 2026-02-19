@@ -9,6 +9,7 @@ import torch
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 from torchmetrics.classification import MulticlassAccuracy
 
+from classifier_training.losses import build_loss_fn
 from classifier_training.types import ClassificationBatch
 
 
@@ -33,6 +34,8 @@ class BaseClassificationModel(L.LightningModule):
         label_smoothing: float = 0.1,
         warmup_start_factor: float = 1e-3,
         cosine_eta_min_factor: float = 0.05,
+        loss_name: str = "cross_entropy",
+        focal_gamma: float = 2.0,
     ) -> None:
         super().__init__()
         self.save_hyperparameters()
@@ -69,10 +72,12 @@ class BaseClassificationModel(L.LightningModule):
         )
 
     def _build_loss_fn(self) -> None:
-        """Build CrossEntropyLoss from registered class_weights buffer."""
-        self.loss_fn = torch.nn.CrossEntropyLoss(
+        """Build loss function from config using the loss factory."""
+        self.loss_fn = build_loss_fn(
+            name=self.hparams["loss_name"],
             weight=self.class_weights,
             label_smoothing=self.hparams["label_smoothing"],
+            focal_gamma=self.hparams["focal_gamma"],
         )
 
     def set_class_weights(self, weights: torch.Tensor) -> None:
@@ -85,15 +90,11 @@ class BaseClassificationModel(L.LightningModule):
         self.class_weights.copy_(weights.to(self.class_weights.device))
         self._build_loss_fn()
 
-    def training_step(
-        self, batch: ClassificationBatch, batch_idx: int
-    ) -> torch.Tensor:
+    def training_step(self, batch: ClassificationBatch, batch_idx: int) -> torch.Tensor:
         images, labels = batch["images"], batch["labels"]
         logits = self(images)
         loss: torch.Tensor = self.loss_fn(logits, labels)
-        self.log(
-            "train/loss", loss, on_step=True, on_epoch=True, prog_bar=True
-        )
+        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
         # Pattern A: update only in step; compute+log+reset in epoch_end
         self.train_top1.update(logits, labels)
         return loss
@@ -102,15 +103,11 @@ class BaseClassificationModel(L.LightningModule):
         self.log("train/acc_top1", self.train_top1.compute())
         self.train_top1.reset()
 
-    def validation_step(
-        self, batch: ClassificationBatch, batch_idx: int
-    ) -> None:
+    def validation_step(self, batch: ClassificationBatch, batch_idx: int) -> None:
         images, labels = batch["images"], batch["labels"]
         logits = self(images)
         loss = self.loss_fn(logits, labels)
-        self.log(
-            "val/loss", loss, on_step=False, on_epoch=True, prog_bar=True
-        )
+        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.val_top1.update(logits, labels)
         self.val_top5.update(logits, labels)
         self.val_per_cls.update(logits, labels)
@@ -125,9 +122,7 @@ class BaseClassificationModel(L.LightningModule):
         self.val_top5.reset()
         self.val_per_cls.reset()
 
-    def test_step(
-        self, batch: ClassificationBatch, batch_idx: int
-    ) -> None:
+    def test_step(self, batch: ClassificationBatch, batch_idx: int) -> None:
         images, labels = batch["images"], batch["labels"]
         logits = self(images)
         loss = self.loss_fn(logits, labels)
@@ -152,15 +147,10 @@ class BaseClassificationModel(L.LightningModule):
             lr=self.hparams["learning_rate"],
             weight_decay=self.hparams["weight_decay"],
         )
-        max_epochs = (
-            (self.trainer.max_epochs or 100) if self.trainer else 100
-        )
+        max_epochs = (self.trainer.max_epochs or 100) if self.trainer else 100
         warmup = int(self.hparams["warmup_epochs"])
         cosine_epochs = max(1, max_epochs - warmup)
-        eta_min = (
-            self.hparams["learning_rate"]
-            * self.hparams["cosine_eta_min_factor"]
-        )
+        eta_min = self.hparams["learning_rate"] * self.hparams["cosine_eta_min_factor"]
 
         warmup_sched = LinearLR(
             optimizer,
