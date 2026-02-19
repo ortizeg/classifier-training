@@ -32,11 +32,13 @@ def tmp_dataset_dir(tmp_path: Path) -> Path:
                 img = Image.new("RGB", (224, 224), color=(int(cls) * 80, 100, 150))
                 img.save(split_dir / fname)
                 lines.append(
-                    json.dumps({
-                        "image": fname,
-                        "prefix": "Read the number.",
-                        "suffix": cls,
-                    })
+                    json.dumps(
+                        {
+                            "image": fname,
+                            "prefix": "Read the number.",
+                            "suffix": cls,
+                        }
+                    )
                 )
 
         (split_dir / "annotations.jsonl").write_text("\n".join(lines) + "\n")

@@ -158,14 +158,16 @@ class ImageFolderDataModule(L.LightningDataModule):
         These transforms are assigned at Dataset construction time, not
         conditionally in __getitem__ — this is the only safe pattern (DATA-03).
         """
-        return v2.Compose([
-            v2.RandomResizedCrop(self._image_size),
-            v2.RandomHorizontalFlip(),
-            v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-            v2.ToImage(),
-            v2.ToDtype(torch.float32, scale=True),
-            v2.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
-        ])
+        return v2.Compose(
+            [
+                v2.RandomResizedCrop(self._image_size),
+                v2.RandomHorizontalFlip(),
+                v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32, scale=True),
+                v2.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+            ]
+        )
 
     def _build_val_test_transforms(self) -> v2.Compose:
         """Val/test transforms: deterministic resize + normalize only.
@@ -173,13 +175,15 @@ class ImageFolderDataModule(L.LightningDataModule):
         No augmentation. Two passes over the same image produce identical tensors.
         Uses v2.ToImage() + v2.ToDtype() — ToTensor() is deprecated in v2.
         """
-        return v2.Compose([
-            v2.Resize(256),
-            v2.CenterCrop(self._image_size),
-            v2.ToImage(),
-            v2.ToDtype(torch.float32, scale=True),
-            v2.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
-        ])
+        return v2.Compose(
+            [
+                v2.Resize(256),
+                v2.CenterCrop(self._image_size),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32, scale=True),
+                v2.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+            ]
+        )
 
     # ------------------------------------------------------------------
     # LightningDataModule lifecycle
@@ -195,7 +199,9 @@ class ImageFolderDataModule(L.LightningDataModule):
                    None instantiates all three.
         """
         if stage in ("fit", None):
-            train_tfm = self._external_train_transforms or self._build_train_transforms()
+            train_tfm = (
+                self._external_train_transforms or self._build_train_transforms()
+            )
             val_tfm = self._external_val_transforms or self._build_val_test_transforms()
             self._train_dataset = JerseyNumberDataset(
                 root=self._data_root / "train",
@@ -213,7 +219,9 @@ class ImageFolderDataModule(L.LightningDataModule):
             )
 
         if stage in ("test", None):
-            test_tfm = self._external_test_transforms or self._build_val_test_transforms()
+            test_tfm = (
+                self._external_test_transforms or self._build_val_test_transforms()
+            )
             self._test_dataset = JerseyNumberDataset(
                 root=self._data_root / "test",
                 class_to_idx=self.class_to_idx,
@@ -259,8 +267,7 @@ class ImageFolderDataModule(L.LightningDataModule):
             raise RuntimeError("Call setup('fit') before _build_sampler")
         class_weights = self._compute_class_weights()
         sample_weights = [
-            class_weights[label].item()
-            for _, label in self._train_dataset.samples
+            class_weights[label].item() for _, label in self._train_dataset.samples
         ]
         return TrackingWeightedRandomSampler(
             weights=sample_weights,

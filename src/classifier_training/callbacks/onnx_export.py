@@ -47,9 +47,7 @@ class ONNXExportCallback(L.Callback):
         self.input_height = input_height
         self.input_width = input_width
 
-    def on_train_end(
-        self, trainer: L.Trainer, pl_module: L.LightningModule
-    ) -> None:
+    def on_train_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         """Export the model to ONNX at end of training."""
         output_path = Path(self.output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
@@ -75,23 +73,17 @@ class ONNXExportCallback(L.Callback):
 
         # Write labels_mapping.json sidecar if datamodule is available
         datamodule = getattr(trainer, "datamodule", None)
-        if datamodule is not None and hasattr(
-            datamodule, "save_labels_mapping"
-        ):
+        if datamodule is not None and hasattr(datamodule, "save_labels_mapping"):
             labels_path = output_path / "labels_mapping.json"
             datamodule.save_labels_mapping(labels_path)
             logger.info(f"Labels mapping saved to {labels_path}")
 
-    def _export_to_onnx(
-        self, pl_module: L.LightningModule, output_path: Path
-    ) -> None:
+    def _export_to_onnx(self, pl_module: L.LightningModule, output_path: Path) -> None:
         """Export a deep copy of the module to ONNX using the legacy exporter."""
         # Deep copy and move to CPU for export
         model_copy = copy.deepcopy(pl_module).cpu().eval()
 
-        dummy_input = torch.randn(
-            1, 3, self.input_height, self.input_width
-        )
+        dummy_input = torch.randn(1, 3, self.input_height, self.input_width)
 
         # Force legacy exporter path to avoid dynamo issues
         original_env = os.environ.get("TORCH_ONNX_LEGACY_EXPORTER")
@@ -124,6 +116,4 @@ class ONNXExportCallback(L.Callback):
                 os.environ["TORCH_ONNX_LEGACY_EXPORTER"] = original_env
 
         file_size = output_path.stat().st_size
-        logger.info(
-            f"ONNX model exported to {output_path} ({file_size / 1024:.1f} KB)"
-        )
+        logger.info(f"ONNX model exported to {output_path} ({file_size / 1024:.1f} KB)")

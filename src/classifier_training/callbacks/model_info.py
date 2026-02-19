@@ -27,20 +27,14 @@ class ModelInfoCallback(L.Callback):
         super().__init__()
         self.output_dir = Path(output_dir)
 
-    def on_fit_start(
-        self, trainer: L.Trainer, pl_module: L.LightningModule
-    ) -> None:
+    def on_fit_start(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         """Compute model stats, print table, write labels_mapping.json."""
         total_params = sum(p.numel() for p in pl_module.parameters())
         trainable_params = sum(
             p.numel() for p in pl_module.parameters() if p.requires_grad
         )
-        param_size = sum(
-            p.numel() * p.element_size() for p in pl_module.parameters()
-        )
-        buffer_size = sum(
-            b.numel() * b.element_size() for b in pl_module.buffers()
-        )
+        param_size = sum(p.numel() * p.element_size() for p in pl_module.parameters())
+        buffer_size = sum(b.numel() * b.element_size() for b in pl_module.buffers())
         model_size_mb = (param_size + buffer_size) / (1024 * 1024)
 
         # Print rich table

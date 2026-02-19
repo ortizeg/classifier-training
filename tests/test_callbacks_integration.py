@@ -93,9 +93,7 @@ def _make_dataloaders(
     train_dl: DataLoader[dict[str, torch.Tensor]] = DataLoader(
         ds, batch_size=batch_size
     )
-    val_dl: DataLoader[dict[str, torch.Tensor]] = DataLoader(
-        ds, batch_size=batch_size
-    )
+    val_dl: DataLoader[dict[str, torch.Tensor]] = DataLoader(ds, batch_size=batch_size)
     return train_dl, val_dl
 
 
@@ -241,9 +239,7 @@ class TestOnnxExportUsesEmaWeights:
         session = ort.InferenceSession(
             str(onnx_path), providers=["CPUExecutionProvider"]
         )
-        dummy_input = np.random.randn(1, 3, INPUT_SIZE, INPUT_SIZE).astype(
-            np.float32
-        )
+        dummy_input = np.random.randn(1, 3, INPUT_SIZE, INPUT_SIZE).astype(np.float32)
         result = session.run(None, {"input": dummy_input})
 
         # Output shape is (1, NUM_CLASSES)

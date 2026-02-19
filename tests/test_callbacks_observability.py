@@ -105,9 +105,7 @@ class TestConfusionMatrixCallback:
 
     def test_creates_png_after_validation(self, tmp_path: Path) -> None:
         """Verify PNG is created after simulated validation epoch."""
-        cb = ConfusionMatrixCallback(
-            output_dir=str(tmp_path), num_classes=3
-        )
+        cb = ConfusionMatrixCallback(output_dir=str(tmp_path), num_classes=3)
 
         pl_module = _FakeLightningModule(num_classes=3)
         trainer = _mock_trainer(current_epoch=0)
@@ -122,7 +120,11 @@ class TestConfusionMatrixCallback:
         batch = {"images": images, "labels": labels}
 
         cb.on_validation_batch_end(
-            trainer, pl_module, None, batch, batch_idx=0  # type: ignore[arg-type]
+            trainer,
+            pl_module,
+            None,
+            batch,
+            batch_idx=0,  # type: ignore[arg-type]
         )
 
         # End validation epoch
@@ -133,9 +135,7 @@ class TestConfusionMatrixCallback:
 
     def test_device_handling_cpu(self, tmp_path: Path) -> None:
         """Verify metric is initialized on CPU device."""
-        cb = ConfusionMatrixCallback(
-            output_dir=str(tmp_path), num_classes=5
-        )
+        cb = ConfusionMatrixCallback(output_dir=str(tmp_path), num_classes=5)
         pl_module = _FakeLightningModule(num_classes=5)
         trainer = _mock_trainer()
 
@@ -360,9 +360,7 @@ class TestSampleVisualizationCallback:
 
     def test_creates_grid_png(self, tmp_path: Path) -> None:
         """Verify PNG grid is created with correct number of samples."""
-        cb = SampleVisualizationCallback(
-            output_dir=str(tmp_path), num_samples=4
-        )
+        cb = SampleVisualizationCallback(output_dir=str(tmp_path), num_samples=4)
 
         pl_module = _FakeLightningModule(num_classes=3)
         dm = _mock_datamodule()
@@ -392,7 +390,11 @@ class TestSampleVisualizationCallback:
         batch = {"images": images, "labels": labels}
 
         cb.on_validation_batch_end(
-            trainer, img_module, None, batch, batch_idx=0  # type: ignore[arg-type]
+            trainer,
+            img_module,
+            None,
+            batch,
+            batch_idx=0,  # type: ignore[arg-type]
         )
 
         assert len(cb._images) == 4
@@ -404,9 +406,7 @@ class TestSampleVisualizationCallback:
 
     def test_respects_num_samples_limit(self, tmp_path: Path) -> None:
         """Verify only num_samples images are collected."""
-        cb = SampleVisualizationCallback(
-            output_dir=str(tmp_path), num_samples=2
-        )
+        cb = SampleVisualizationCallback(output_dir=str(tmp_path), num_samples=2)
 
         pl_module = _FakeLightningModule(num_classes=3)
         trainer = _mock_trainer(current_epoch=0)
@@ -419,7 +419,11 @@ class TestSampleVisualizationCallback:
         batch = {"images": images, "labels": labels}
 
         cb.on_validation_batch_end(
-            trainer, pl_module, None, batch, batch_idx=0  # type: ignore[arg-type]
+            trainer,
+            pl_module,
+            None,
+            batch,
+            batch_idx=0,  # type: ignore[arg-type]
         )
 
         assert len(cb._images) == 2

@@ -71,9 +71,7 @@ class TestEMACallbackTrainBatch:
             "labels": torch.zeros(1),
         }
         for i in range(5):
-            ema.on_train_batch_end(
-                trainer, pl_module, None, batch, i
-            )
+            ema.on_train_batch_end(trainer, pl_module, None, batch, i)
         assert ema._step_count == 5
 
     def test_warmup_formula_produces_correct_decay(self) -> None:
@@ -110,9 +108,7 @@ class TestEMACallbackTrainBatch:
         # EMA should NOT equal the model weights (partial update)
         for key in ema.ema_state_dict:
             if ema.ema_state_dict[key].dtype.is_floating_point:
-                assert not torch.equal(
-                    ema.ema_state_dict[key], model.state_dict()[key]
-                )
+                assert not torch.equal(ema.ema_state_dict[key], model.state_dict()[key])
 
 
 class TestEMACallbackValidation:

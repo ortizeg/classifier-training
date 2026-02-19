@@ -45,9 +45,7 @@ def hydra_cfg_with_overrides() -> callable:
     def _compose(overrides: list[str]) -> DictConfig:
         GlobalHydra.instance().clear()
         with initialize_config_dir(config_dir=CONF_DIR, version_base=None):
-            return compose(
-                config_name="train_basketball_resnet18", overrides=overrides
-            )
+            return compose(config_name="train_basketball_resnet18", overrides=overrides)
 
     yield _compose
     GlobalHydra.instance().clear()
@@ -139,12 +137,12 @@ def test_checkpoint_resume_path_resolves_stably(hydra_cfg: DictConfig) -> None:
 
     # 2. Verify train.py sets default_root_dir (so "checkpoints" resolves stably)
     train_src = Path("src/classifier_training/train.py").read_text()
-    assert (
-        "default_root_dir" in train_src
-    ), "train.py must set default_root_dir for stable checkpoint resolution"
-    assert (
-        "HydraConfig.get().runtime.cwd" in train_src
-    ), "default_root_dir should use original cwd, not Hydra output dir"
+    assert "default_root_dir" in train_src, (
+        "train.py must set default_root_dir for stable checkpoint resolution"
+    )
+    assert "HydraConfig.get().runtime.cwd" in train_src, (
+        "default_root_dir should use original cwd, not Hydra output dir"
+    )
 
 
 # --- Test 9: WandB logger config ---
@@ -153,10 +151,7 @@ def test_checkpoint_resume_path_resolves_stably(hydra_cfg: DictConfig) -> None:
 def test_wandb_logger_config(hydra_cfg: DictConfig) -> None:
     """WandbLogger config present in composed config."""
     assert "wandb" in hydra_cfg.logging
-    assert (
-        hydra_cfg.logging.wandb._target_
-        == "lightning.pytorch.loggers.WandbLogger"
-    )
+    assert hydra_cfg.logging.wandb._target_ == "lightning.pytorch.loggers.WandbLogger"
     assert hydra_cfg.logging.wandb.project == "classifier-training"
 
 

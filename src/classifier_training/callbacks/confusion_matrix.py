@@ -37,13 +37,11 @@ class ConfusionMatrixCallback(L.Callback):
         self.class_names = class_names
         self._cm: MulticlassConfusionMatrix | None = None
 
-    def on_fit_start(
-        self, trainer: L.Trainer, pl_module: L.LightningModule
-    ) -> None:
+    def on_fit_start(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         """Initialize confusion matrix metric on the model's device."""
-        self._cm = MulticlassConfusionMatrix(
-            num_classes=self.num_classes
-        ).to(pl_module.device)
+        self._cm = MulticlassConfusionMatrix(num_classes=self.num_classes).to(
+            pl_module.device
+        )
 
         # Auto-detect class names from datamodule if not explicitly provided
         if self.class_names is None:
@@ -59,9 +57,7 @@ class ConfusionMatrixCallback(L.Callback):
                     "class names from datamodule"
                 )
 
-        logger.info(
-            f"ConfusionMatrixCallback: initialized on {pl_module.device}"
-        )
+        logger.info(f"ConfusionMatrixCallback: initialized on {pl_module.device}")
 
     def on_validation_batch_end(
         self,

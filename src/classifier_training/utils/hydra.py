@@ -47,8 +47,7 @@ def register(
         # Register in ConfigStore
         cs = ConfigStore.instance()
         logger.debug(
-            f"Registering {target_cls.__name__} as '{config_name}' "
-            f"in group '{group}'"
+            f"Registering {target_cls.__name__} as '{config_name}' in group '{group}'"
         )
         # Build the configuration node
         node = {"_target_": target_path}

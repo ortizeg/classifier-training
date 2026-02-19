@@ -68,9 +68,7 @@ class TestONNXExportCallbackExport:
         trainer.datamodule = None
 
         output_dir = str(tmp_path / "onnx_out")
-        cb = ONNXExportCallback(
-            output_dir=output_dir, input_height=32, input_width=32
-        )
+        cb = ONNXExportCallback(output_dir=output_dir, input_height=32, input_width=32)
         cb.on_train_end(trainer, pl_module)
 
         onnx_path = tmp_path / "onnx_out" / "model.onnx"
@@ -85,9 +83,7 @@ class TestONNXExportCallbackExport:
         trainer.datamodule = None
 
         output_dir = str(tmp_path / "onnx_out")
-        cb = ONNXExportCallback(
-            output_dir=output_dir, input_height=32, input_width=32
-        )
+        cb = ONNXExportCallback(output_dir=output_dir, input_height=32, input_width=32)
         cb.on_train_end(trainer, pl_module)
 
         session = ort.InferenceSession(
@@ -106,9 +102,7 @@ class TestONNXExportCallbackExport:
         trainer.datamodule = None
 
         output_dir = str(tmp_path / "onnx_out")
-        cb = ONNXExportCallback(
-            output_dir=output_dir, input_height=32, input_width=32
-        )
+        cb = ONNXExportCallback(output_dir=output_dir, input_height=32, input_width=32)
         cb.on_train_end(trainer, pl_module)
 
         session = ort.InferenceSession(
@@ -134,9 +128,7 @@ class TestONNXExportCallbackExport:
         trainer.datamodule = None
 
         output_dir = str(tmp_path / "onnx_out")
-        cb = ONNXExportCallback(
-            output_dir=output_dir, input_height=32, input_width=32
-        )
+        cb = ONNXExportCallback(output_dir=output_dir, input_height=32, input_width=32)
         cb.on_train_end(trainer, pl_module)
 
         session = ort.InferenceSession(
@@ -161,18 +153,14 @@ class TestONNXExportWithEMA:
         # Shift EMA weights so they differ from model
         for key in ema_cb.ema_state_dict:
             if ema_cb.ema_state_dict[key].dtype.is_floating_point:
-                ema_cb.ema_state_dict[key] = (
-                    ema_cb.ema_state_dict[key] + 10.0
-                )
+                ema_cb.ema_state_dict[key] = ema_cb.ema_state_dict[key] + 10.0
 
         trainer = MagicMock()
         trainer.callbacks = [ema_cb]
         trainer.datamodule = None
 
         output_dir = str(tmp_path / "onnx_ema")
-        cb = ONNXExportCallback(
-            output_dir=output_dir, input_height=32, input_width=32
-        )
+        cb = ONNXExportCallback(output_dir=output_dir, input_height=32, input_width=32)
         cb.on_train_end(trainer, model)
 
         # Verify ONNX file was created

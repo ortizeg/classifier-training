@@ -54,9 +54,7 @@ class TrainingHistoryCallback(L.Callback):
             if val is None and key == "train_loss":
                 # Also try without _epoch suffix for train/loss
                 val = metrics.get("train/loss")
-            self.history[key].append(
-                val.item() if val is not None else None
-            )
+            self.history[key].append(val.item() if val is not None else None)
 
     def on_validation_epoch_end(
         self, trainer: L.Trainer, pl_module: L.LightningModule

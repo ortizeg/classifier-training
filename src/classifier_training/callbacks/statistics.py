@@ -16,9 +16,7 @@ class DatasetStatisticsCallback(L.Callback):
     per class and displays them sorted by index.
     """
 
-    def on_fit_start(
-        self, trainer: L.Trainer, pl_module: L.LightningModule
-    ) -> None:
+    def on_fit_start(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         """Compute and display class distribution at training start."""
         datamodule = getattr(trainer, "datamodule", None)
         if datamodule is None:
@@ -28,8 +26,7 @@ class DatasetStatisticsCallback(L.Callback):
         train_dataset = getattr(datamodule, "_train_dataset", None)
         if train_dataset is None:
             logger.warning(
-                "No _train_dataset found on datamodule. "
-                "Skipping dataset statistics."
+                "No _train_dataset found on datamodule. Skipping dataset statistics."
             )
             return
 

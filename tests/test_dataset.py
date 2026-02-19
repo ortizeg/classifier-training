@@ -41,10 +41,12 @@ class TestJerseyNumberDataset:
     def test_getitem_with_transform_returns_tensor(
         self, tmp_dataset_dir: Path, class_to_idx: dict[str, int]
     ) -> None:
-        transform = v2.Compose([
-            v2.ToImage(),
-            v2.ToDtype(torch.float32, scale=True),
-        ])
+        transform = v2.Compose(
+            [
+                v2.ToImage(),
+                v2.ToDtype(torch.float32, scale=True),
+            ]
+        )
         ds = JerseyNumberDataset(
             tmp_dataset_dir / "train", class_to_idx, transform=transform
         )

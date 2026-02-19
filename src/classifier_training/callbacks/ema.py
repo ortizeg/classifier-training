@@ -38,9 +38,7 @@ class EMACallback(L.Callback):
         self._step_count: int = 0
         self._ema_applied: bool = False
 
-    def on_fit_start(
-        self, trainer: L.Trainer, pl_module: L.LightningModule
-    ) -> None:
+    def on_fit_start(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         """Initialize EMA state dict from model."""
         logger.info(f"Initializing EMA with decay={self.decay}")
         self.ema_state_dict = copy.deepcopy(pl_module.state_dict())
@@ -92,9 +90,7 @@ class EMACallback(L.Callback):
             pl_module.load_state_dict(self.original_state_dict)
             self._ema_applied = False
 
-    def on_test_start(
-        self, trainer: L.Trainer, pl_module: L.LightningModule
-    ) -> None:
+    def on_test_start(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         """Apply EMA weights for testing."""
         if not self.ema_state_dict:
             return
@@ -103,9 +99,7 @@ class EMACallback(L.Callback):
         pl_module.load_state_dict(self.ema_state_dict)
         self._ema_applied = True
 
-    def on_test_end(
-        self, trainer: L.Trainer, pl_module: L.LightningModule
-    ) -> None:
+    def on_test_end(self, trainer: L.Trainer, pl_module: L.LightningModule) -> None:
         """Restore original weights after testing."""
         if self._ema_applied and self.original_state_dict:
             logger.debug("Restoring original weights after testing")
@@ -125,6 +119,4 @@ class EMACallback(L.Callback):
         self.ema_state_dict = state_dict.get("ema_state_dict", {})
         self._step_count = state_dict.get("step_count", 0)
         self.decay = state_dict.get("decay", self.decay)
-        logger.info(
-            f"Loaded EMA state from checkpoint (step_count={self._step_count})"
-        )
+        logger.info(f"Loaded EMA state from checkpoint (step_count={self._step_count})")
