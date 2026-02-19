@@ -1,7 +1,7 @@
 # Lightning built-in callbacks
 model_checkpoint:
   _target_: lightning.pytorch.callbacks.ModelCheckpoint
-  dirpath: ${hydra:runtime.output_dir}/checkpoints
+  dirpath: checkpoints
   filename: "epoch={epoch:02d}-val_acc={val/acc_top1:.4f}"
   monitor: val/acc_top1
   mode: max

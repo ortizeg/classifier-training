@@ -11,7 +11,7 @@ from classifier_training.models.base import BaseClassificationModel
 from classifier_training.utils.hydra import register
 
 
-@register(name="resnet18")
+@register(name="resnet18", group="model")
 class ResNet18ClassificationModel(BaseClassificationModel):
     """ResNet18 backbone with ImageNet pretrained weights.
 
@@ -35,7 +35,7 @@ class ResNet18ClassificationModel(BaseClassificationModel):
         return self.model(images)  # type: ignore[no-any-return]
 
 
-@register(name="resnet50")
+@register(name="resnet50", group="model")
 class ResNet50ClassificationModel(BaseClassificationModel):
     """ResNet50 backbone with ImageNet pretrained weights.
 

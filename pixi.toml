@@ -13,6 +13,7 @@ lint = "ruff check ."
 format = "ruff format ."
 format-check = "ruff format --check ."
 typecheck = "mypy src/"
+train = "python -m classifier_training.train"
 precommit = "pre-commit run --all-files"
 
 [dependencies]
@@ -44,3 +45,4 @@ default = ["dev"]
 [pypi-dependencies]
 classifier-training = { path = ".", editable = true }
 onnxruntime = ">=1.23.2, <2"
+wandb = ">=0.19,<1.0"

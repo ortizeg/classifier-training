@@ -1,0 +1,8 @@
+wandb:
+  _target_: lightning.pytorch.loggers.WandbLogger
+  project: classifier-training
+  name: null
+  save_dir: ${hydra:runtime.output_dir}
+  log_model: false
+  tags: []
+  notes: null
