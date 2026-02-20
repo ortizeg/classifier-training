@@ -295,3 +295,67 @@ class RandomZoomOut(v2.Transform):
         result = canvas.resize((w, h), Image.BILINEAR)
 
         return (result, *rest) if rest else result
+
+
+class RandomZoomIn(v2.Transform):
+    """Simulate a tight detector bounding box by cropping and resizing up.
+
+    Crops a random sub-region of the image and resizes it back to the
+    original dimensions, making the subject appear larger and potentially
+    cutting off edges — as happens when an object detector returns a box
+    that is smaller than the full object.
+
+    Args:
+        min_scale: Minimum crop fraction (e.g. 0.7 = crop to 70% of image).
+            Must be in (0, 1].
+        max_scale: Maximum crop fraction.  1.0 = no crop.
+        p: Probability of applying the transform.
+    """
+
+    def __init__(
+        self,
+        min_scale: float = 0.7,
+        max_scale: float = 1.0,
+        p: float = 0.3,
+    ) -> None:
+        super().__init__()
+        if not 0.0 < min_scale <= max_scale <= 1.0:
+            raise ValueError(
+                f"min_scale ({min_scale}) and max_scale ({max_scale}) "
+                "must satisfy 0 < min_scale <= max_scale <= 1.0"
+            )
+        if not 0.0 <= p <= 1.0:
+            raise ValueError(f"p must be in [0, 1], got {p}")
+        self.min_scale = min_scale
+        self.max_scale = max_scale
+        self.p = p
+
+    def forward(self, *inputs: Any) -> Any:
+        img = inputs[0]
+        rest = inputs[1:]
+
+        if not isinstance(img, Image.Image):
+            raise TypeError(
+                f"RandomZoomIn expects a PIL Image, got {type(img)}"
+            )
+
+        if random.random() >= self.p:  # noqa: S311
+            return inputs if rest else img
+
+        scale = random.uniform(self.min_scale, self.max_scale)  # noqa: S311
+        if scale >= 1.0:
+            return inputs if rest else img
+
+        w, h = img.size
+        crop_w, crop_h = int(w * scale), int(h * scale)
+
+        # Random offset for the crop
+        max_x = w - crop_w
+        max_y = h - crop_h
+        x = random.randint(0, max_x) if max_x > 0 else 0  # noqa: S311
+        y = random.randint(0, max_y) if max_y > 0 else 0  # noqa: S311
+
+        cropped = img.crop((x, y, x + crop_w, y + crop_h))
+        result = cropped.resize((w, h), Image.BILINEAR)
+
+        return (result, *rest) if rest else result

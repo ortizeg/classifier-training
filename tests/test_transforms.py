@@ -12,6 +12,7 @@ from classifier_training.transforms import (
     RandomGaussianNoise,
     RandomJPEGCompression,
     RandomPixelate,
+    RandomZoomIn,
     RandomZoomOut,
 )
 
@@ -327,3 +328,68 @@ class TestRandomZoomOut:
         )
         result = t(rgb_image)
         assert isinstance(result, Image.Image)
+
+
+# --- RandomZoomIn ---
+
+
+class TestRandomZoomIn:
+    def test_output_is_pil_image(self, rgb_image: Image.Image) -> None:
+        t = RandomZoomIn(p=1.0)
+        result = t(rgb_image)
+        assert isinstance(result, Image.Image)
+
+    def test_preserves_size(self, rgb_image: Image.Image) -> None:
+        t = RandomZoomIn(min_scale=0.7, max_scale=0.9, p=1.0)
+        result = t(rgb_image)
+        assert result.size == rgb_image.size
+
+    def test_preserves_mode(self, rgb_image: Image.Image) -> None:
+        t = RandomZoomIn(min_scale=0.7, max_scale=0.9, p=1.0)
+        result = t(rgb_image)
+        assert result.mode == rgb_image.mode
+
+    def test_p_zero_skips(self, rgb_image: Image.Image) -> None:
+        t = RandomZoomIn(p=0.0)
+        result = t(rgb_image)
+        assert result is rgb_image
+
+    def test_p_one_always_applies(self, rgb_image: Image.Image) -> None:
+        t = RandomZoomIn(min_scale=0.5, max_scale=0.8, p=1.0)
+        result = t(rgb_image)
+        assert result is not rgb_image
+
+    def test_invalid_scale_range(self) -> None:
+        with pytest.raises(ValueError, match="min_scale"):
+            RandomZoomIn(min_scale=0.9, max_scale=0.5)
+
+    def test_invalid_scale_above_one(self) -> None:
+        with pytest.raises(ValueError, match="min_scale"):
+            RandomZoomIn(min_scale=0.5, max_scale=1.5)
+
+    def test_invalid_scale_zero(self) -> None:
+        with pytest.raises(ValueError, match="min_scale"):
+            RandomZoomIn(min_scale=0.0, max_scale=0.8)
+
+    def test_invalid_p(self) -> None:
+        with pytest.raises(ValueError, match="p must be"):
+            RandomZoomIn(p=1.5)
+
+    def test_rejects_non_pil(self) -> None:
+        t = RandomZoomIn(p=1.0)
+        with pytest.raises(TypeError, match="PIL Image"):
+            t("not_an_image")
+
+    def test_non_square_image(self) -> None:
+        img = Image.new("RGB", (100, 50))
+        t = RandomZoomIn(min_scale=0.7, max_scale=0.9, p=1.0)
+        result = t(img)
+        assert result.size == (100, 50)
+
+    def test_deterministic_with_seed(self, rgb_image: Image.Image) -> None:
+        t = RandomZoomIn(min_scale=0.5, max_scale=0.9, p=1.0)
+        random.seed(42)
+        r1 = t(rgb_image)
+        random.seed(42)
+        r2 = t(rgb_image)
+        assert list(r1.tobytes()) == list(r2.tobytes())
