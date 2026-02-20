@@ -224,3 +224,74 @@ class RandomBilinearDownscale(v2.Transform):
         )
 
         return (blurred, *rest) if rest else blurred
+
+
+class RandomZoomOut(v2.Transform):
+    """Simulate a loose detector bounding box by zooming out with padding.
+
+    Places the image onto a larger canvas filled with ``fill_color``, then
+    resizes back to the original dimensions.  This makes the subject appear
+    smaller within the crop, as happens when an object detector returns a box
+    that is larger than the actual object.
+
+    Args:
+        max_scale: Maximum zoom-out factor.  A value of 1.5 means up to 50%
+            extra context on each side.  Must be > 1.0.
+        min_scale: Minimum zoom-out factor.  1.0 = no zoom-out.
+        fill_color: RGB tuple used to fill the padding area.  Defaults to
+            ImageNet mean (124, 116, 104).
+        p: Probability of applying the transform.
+    """
+
+    def __init__(
+        self,
+        min_scale: float = 1.0,
+        max_scale: float = 1.5,
+        fill_color: tuple[int, int, int] = (124, 116, 104),
+        p: float = 0.3,
+    ) -> None:
+        super().__init__()
+        if not 1.0 <= min_scale <= max_scale:
+            raise ValueError(
+                f"min_scale ({min_scale}) and max_scale ({max_scale}) "
+                "must satisfy 1.0 <= min_scale <= max_scale"
+            )
+        if not 0.0 <= p <= 1.0:
+            raise ValueError(f"p must be in [0, 1], got {p}")
+        self.min_scale = min_scale
+        self.max_scale = max_scale
+        self.fill_color = fill_color
+        self.p = p
+
+    def forward(self, *inputs: Any) -> Any:
+        img = inputs[0]
+        rest = inputs[1:]
+
+        if not isinstance(img, Image.Image):
+            raise TypeError(
+                f"RandomZoomOut expects a PIL Image, got {type(img)}"
+            )
+
+        if random.random() >= self.p:  # noqa: S311
+            return inputs if rest else img
+
+        scale = random.uniform(self.min_scale, self.max_scale)  # noqa: S311
+        if scale <= 1.0:
+            return inputs if rest else img
+
+        w, h = img.size
+        new_w, new_h = int(w * scale), int(h * scale)
+
+        canvas = Image.new(img.mode, (new_w, new_h), self.fill_color)
+
+        # Random placement of original image on the larger canvas
+        max_x = new_w - w
+        max_y = new_h - h
+        offset_x = random.randint(0, max_x) if max_x > 0 else 0  # noqa: S311
+        offset_y = random.randint(0, max_y) if max_y > 0 else 0  # noqa: S311
+        canvas.paste(img, (offset_x, offset_y))
+
+        # Resize back to original dimensions
+        result = canvas.resize((w, h), Image.BILINEAR)
+
+        return (result, *rest) if rest else result

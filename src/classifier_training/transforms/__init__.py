@@ -11,6 +11,7 @@ from classifier_training.transforms.degradation import (
     RandomGaussianNoise,
     RandomJPEGCompression,
     RandomPixelate,
+    RandomZoomOut,
 )
 
 __all__ = [
@@ -18,5 +19,6 @@ __all__ = [
     "RandomGaussianNoise",
     "RandomJPEGCompression",
     "RandomPixelate",
+    "RandomZoomOut",
     "ToFloat32Tensor",
 ]
