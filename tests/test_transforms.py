@@ -7,7 +7,12 @@ import random
 import pytest
 from PIL import Image
 
-from classifier_training.transforms import RandomJPEGCompression, RandomPixelate
+from classifier_training.transforms import (
+    RandomBilinearDownscale,
+    RandomGaussianNoise,
+    RandomJPEGCompression,
+    RandomPixelate,
+)
 
 
 @pytest.fixture()
@@ -131,6 +136,123 @@ class TestRandomPixelate:
 
     def test_deterministic_with_seed(self, rgb_image: Image.Image) -> None:
         t = RandomPixelate(scale_min=0.25, scale_max=0.75, p=1.0)
+        random.seed(42)
+        r1 = t(rgb_image)
+        random.seed(42)
+        r2 = t(rgb_image)
+        assert list(r1.tobytes()) == list(r2.tobytes())
+
+
+# --- RandomGaussianNoise ---
+
+
+class TestRandomGaussianNoise:
+    def test_output_is_pil_image(self, rgb_image: Image.Image) -> None:
+        t = RandomGaussianNoise(p=1.0)
+        result = t(rgb_image)
+        assert isinstance(result, Image.Image)
+
+    def test_preserves_size(self, rgb_image: Image.Image) -> None:
+        t = RandomGaussianNoise(p=1.0)
+        result = t(rgb_image)
+        assert result.size == rgb_image.size
+
+    def test_preserves_mode(self, rgb_image: Image.Image) -> None:
+        t = RandomGaussianNoise(p=1.0)
+        result = t(rgb_image)
+        assert result.mode == rgb_image.mode
+
+    def test_p_zero_skips(self, rgb_image: Image.Image) -> None:
+        t = RandomGaussianNoise(p=0.0)
+        result = t(rgb_image)
+        assert result is rgb_image
+
+    def test_p_one_always_applies(self, rgb_image: Image.Image) -> None:
+        t = RandomGaussianNoise(sigma_min=20.0, sigma_max=25.0, p=1.0)
+        result = t(rgb_image)
+        assert result is not rgb_image
+
+    def test_invalid_sigma_range(self) -> None:
+        with pytest.raises(ValueError, match="sigma_min"):
+            RandomGaussianNoise(sigma_min=30.0, sigma_max=10.0)
+
+    def test_invalid_sigma_bounds(self) -> None:
+        with pytest.raises(ValueError, match="sigma_min"):
+            RandomGaussianNoise(sigma_min=0.0, sigma_max=10.0)
+
+    def test_invalid_p(self) -> None:
+        with pytest.raises(ValueError, match="p must be"):
+            RandomGaussianNoise(p=2.0)
+
+    def test_rejects_non_pil(self) -> None:
+        t = RandomGaussianNoise(p=1.0)
+        with pytest.raises(TypeError, match="PIL Image"):
+            t("not_an_image")
+
+    def test_pixel_values_in_range(self, rgb_image: Image.Image) -> None:
+        import numpy as np
+
+        t = RandomGaussianNoise(sigma_min=25.0, sigma_max=25.0, p=1.0)
+        result = t(rgb_image)
+        arr = np.array(result)
+        assert arr.min() >= 0
+        assert arr.max() <= 255
+
+
+# --- RandomBilinearDownscale ---
+
+
+class TestRandomBilinearDownscale:
+    def test_output_is_pil_image(self, rgb_image: Image.Image) -> None:
+        t = RandomBilinearDownscale(p=1.0)
+        result = t(rgb_image)
+        assert isinstance(result, Image.Image)
+
+    def test_preserves_size(self, rgb_image: Image.Image) -> None:
+        t = RandomBilinearDownscale(p=1.0)
+        result = t(rgb_image)
+        assert result.size == rgb_image.size
+
+    def test_preserves_mode(self, rgb_image: Image.Image) -> None:
+        t = RandomBilinearDownscale(p=1.0)
+        result = t(rgb_image)
+        assert result.mode == rgb_image.mode
+
+    def test_p_zero_skips(self, rgb_image: Image.Image) -> None:
+        t = RandomBilinearDownscale(p=0.0)
+        result = t(rgb_image)
+        assert result is rgb_image
+
+    def test_p_one_always_applies(self, rgb_image: Image.Image) -> None:
+        t = RandomBilinearDownscale(scale_min=0.3, scale_max=0.3, p=1.0)
+        result = t(rgb_image)
+        assert result is not rgb_image
+
+    def test_invalid_scale_range(self) -> None:
+        with pytest.raises(ValueError, match="scale_min"):
+            RandomBilinearDownscale(scale_min=0.8, scale_max=0.3)
+
+    def test_invalid_scale_bounds(self) -> None:
+        with pytest.raises(ValueError, match="scale_min"):
+            RandomBilinearDownscale(scale_min=0.0, scale_max=0.5)
+
+    def test_invalid_p(self) -> None:
+        with pytest.raises(ValueError, match="p must be"):
+            RandomBilinearDownscale(p=-0.1)
+
+    def test_rejects_non_pil(self) -> None:
+        t = RandomBilinearDownscale(p=1.0)
+        with pytest.raises(TypeError, match="PIL Image"):
+            t("not_an_image")
+
+    def test_non_square_image(self) -> None:
+        img = Image.new("RGB", (100, 50))
+        t = RandomBilinearDownscale(p=1.0)
+        result = t(img)
+        assert result.size == (100, 50)
+
+    def test_deterministic_with_seed(self, rgb_image: Image.Image) -> None:
+        t = RandomBilinearDownscale(scale_min=0.3, scale_max=0.75, p=1.0)
         random.seed(42)
         r1 = t(rgb_image)
         random.seed(42)

@@ -1,8 +1,9 @@
 """Broadcast video degradation transforms for classification training.
 
-Simulates JPEG compression artifacts and low-resolution pixelation commonly
-seen in broadcast basketball footage.  Both transforms operate on PIL images
-and should be placed *before* ``ToFloat32Tensor`` in the pipeline.
+Simulates JPEG compression artifacts, low-resolution pixelation, sensor noise,
+and bilinear resize blur commonly seen in broadcast basketball footage.  All
+transforms operate on PIL images and should be placed *before*
+``ToFloat32Tensor`` in the pipeline.
 """
 
 from __future__ import annotations
@@ -11,6 +12,7 @@ import io
 import random
 from typing import Any
 
+import numpy as np
 from PIL import Image
 from torchvision.transforms import v2
 
@@ -115,3 +117,110 @@ class RandomPixelate(v2.Transform):
         )
 
         return (pixelated, *rest) if rest else pixelated
+
+
+class RandomGaussianNoise(v2.Transform):
+    """Add random Gaussian noise to simulate sensor noise in dim arenas.
+
+    Args:
+        sigma_min: Minimum noise standard deviation (pixel scale 0-255).
+        sigma_max: Maximum noise standard deviation.
+        p: Probability of applying the transform.
+    """
+
+    def __init__(
+        self,
+        sigma_min: float = 5.0,
+        sigma_max: float = 25.0,
+        p: float = 0.3,
+    ) -> None:
+        super().__init__()
+        if not 0.0 < sigma_min <= sigma_max:
+            raise ValueError(
+                f"sigma_min ({sigma_min}) and sigma_max ({sigma_max}) "
+                "must satisfy 0 < sigma_min <= sigma_max"
+            )
+        if not 0.0 <= p <= 1.0:
+            raise ValueError(f"p must be in [0, 1], got {p}")
+        self.sigma_min = sigma_min
+        self.sigma_max = sigma_max
+        self.p = p
+
+    def forward(self, *inputs: Any) -> Any:
+        img = inputs[0]
+        rest = inputs[1:]
+
+        if not isinstance(img, Image.Image):
+            raise TypeError(f"RandomGaussianNoise expects a PIL Image, got {type(img)}")
+
+        if random.random() >= self.p:  # noqa: S311
+            return inputs if rest else img
+
+        sigma = random.uniform(self.sigma_min, self.sigma_max)  # noqa: S311
+        arr = np.array(img, dtype=np.float32)
+        noise = (
+            np.random.default_rng()
+            .normal(0.0, sigma, arr.shape)
+            .astype(np.float32)
+        )
+        noisy = np.clip(arr + noise, 0, 255).astype(np.uint8)
+        result = Image.fromarray(noisy, mode=img.mode)
+
+        return (result, *rest) if rest else result
+
+
+class RandomBilinearDownscale(v2.Transform):
+    """Simulate smooth broadcast resize via bilinear downscale + upscale.
+
+    Unlike ``RandomPixelate`` (which uses NEAREST for blocky artifacts), this
+    uses ``BILINEAR`` interpolation producing softer, more realistic broadcast
+    resize blur.
+
+    Args:
+        scale_min: Minimum downscale factor (e.g. 0.3 = 30% resolution).
+        scale_max: Maximum downscale factor.
+        p: Probability of applying the transform.
+    """
+
+    def __init__(
+        self,
+        scale_min: float = 0.3,
+        scale_max: float = 0.75,
+        p: float = 0.3,
+    ) -> None:
+        super().__init__()
+        if not 0.0 < scale_min <= scale_max < 1.0:
+            raise ValueError(
+                f"scale_min ({scale_min}) and scale_max ({scale_max}) "
+                "must satisfy 0 < scale_min <= scale_max < 1"
+            )
+        if not 0.0 <= p <= 1.0:
+            raise ValueError(f"p must be in [0, 1], got {p}")
+        self.scale_min = scale_min
+        self.scale_max = scale_max
+        self.p = p
+
+    def forward(self, *inputs: Any) -> Any:
+        img = inputs[0]
+        rest = inputs[1:]
+
+        if not isinstance(img, Image.Image):
+            raise TypeError(
+                f"RandomBilinearDownscale expects a PIL Image, got {type(img)}"
+            )
+
+        if random.random() >= self.p:  # noqa: S311
+            return inputs if rest else img
+
+        scale = random.uniform(self.scale_min, self.scale_max)  # noqa: S311
+        orig_size = img.size  # (width, height)
+        small_size = (
+            max(1, int(orig_size[0] * scale)),
+            max(1, int(orig_size[1] * scale)),
+        )
+
+        blurred = img.resize(small_size, Image.BILINEAR).resize(
+            orig_size, Image.BILINEAR
+        )
+
+        return (blurred, *rest) if rest else blurred

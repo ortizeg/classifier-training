@@ -7,11 +7,15 @@ configs and composable into train/val/test pipelines.
 
 from classifier_training.transforms.conversion import ToFloat32Tensor
 from classifier_training.transforms.degradation import (
+    RandomBilinearDownscale,
+    RandomGaussianNoise,
     RandomJPEGCompression,
     RandomPixelate,
 )
 
 __all__ = [
+    "RandomBilinearDownscale",
+    "RandomGaussianNoise",
     "RandomJPEGCompression",
     "RandomPixelate",
     "ToFloat32Tensor",
