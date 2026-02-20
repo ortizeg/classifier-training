@@ -6,7 +6,13 @@ configs and composable into train/val/test pipelines.
 """
 
 from classifier_training.transforms.conversion import ToFloat32Tensor
+from classifier_training.transforms.degradation import (
+    RandomJPEGCompression,
+    RandomPixelate,
+)
 
 __all__ = [
+    "RandomJPEGCompression",
+    "RandomPixelate",
     "ToFloat32Tensor",
 ]

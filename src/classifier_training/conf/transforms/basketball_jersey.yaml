@@ -30,6 +30,14 @@ train_transforms:
       sigma:
         - 0.1
         - 2.0
+    - _target_: classifier_training.transforms.RandomJPEGCompression
+      quality_min: 20
+      quality_max: 75
+      p: 0.5
+    - _target_: classifier_training.transforms.RandomPixelate
+      scale_min: 0.25
+      scale_max: 0.75
+      p: 0.3
     - _target_: classifier_training.transforms.ToFloat32Tensor
       scale: true
     - _target_: torchvision.transforms.v2.Normalize
