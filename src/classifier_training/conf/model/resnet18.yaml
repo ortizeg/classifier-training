@@ -7,7 +7,7 @@ pretrained: true
 learning_rate: 5.0e-4
 weight_decay: 1.0e-4
 warmup_epochs: 5
-label_smoothing: 0.0
+label_smoothing: 0.1
 warmup_start_factor: 1.0e-3
 cosine_eta_min_factor: 0.05
 loss_name: cross_entropy

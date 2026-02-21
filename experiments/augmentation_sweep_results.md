@@ -372,13 +372,65 @@ Test whether addressing the 64x class imbalance (class `6` has 4 samples vs `8` 
 
 ---
 
+## Phase 9: Hyperparameter Sweep for Larger Dataset (2026-02-21)
+
+With 2.8x more training data (8,088 samples), we revisited three hyperparameters that may behave differently at this scale.
+
+### Experiments
+
+| # | Name | Change from Baseline (#19) | Hypothesis |
+|---|------|---------------------------|-----------|
+| 20 | `hp-lr-bs` | `lr=1e-3, batch_size=128` | Larger dataset tolerates higher LR + batch |
+| 21 | `hp-label-smooth` | `label_smoothing=0.1` | Was harmful with 3K samples, may help at 8K |
+| 22 | `hp-less-aug` | `RandomApply p=0.7` (was 0.85) | Train acc only 80% — augmentation too harsh? |
+
+### GCS Artifact Links — Phase 9
+
+| # | Config | GCS Output Directory | Vertex AI Job ID |
+|---|--------|---------------------|-----------------|
+| 20 | `hp-lr-bs` | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-hp-lr-bs/20260221_091630/` | `5277059396986208256` |
+| 21 | `hp-label-smooth` | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-hp-label-smooth/20260221_091636/` | `2971216387772514304` |
+| 22 | `hp-less-aug` | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-hp-less-aug/20260221_091642/` | `2590662219259707392` |
+
+### Results
+
+| # | Config | Best Val Top-1 | Early Stop Epoch | Train Top-1 | Val Top-5 | Val Loss |
+|---|--------|---------------|------------------|-------------|-----------|----------|
+| 19 | baseline (real + synth) | ~95.1% | 77 | ~80% | ~99% | 0.204 |
+| 20 | `hp-lr-bs` (lr=1e-3, bs=128) | ~95.1% | 101 | ~54% | ~99% | 0.224 |
+| 21 | **`hp-label-smooth`** (ls=0.1) | **~96.2%** | 73 | ~82.7% | ~99% | 1.094* |
+| 22 | `hp-less-aug` (p=0.7) | ~94.8% | 46 | ~70.1% | ~99% | 0.209 |
+
+*Val loss is higher with label smoothing because the loss function penalizes confident predictions by design. This is expected and not indicative of worse performance — val accuracy is the true metric.
+
+### Analysis
+
+1. **Label smoothing is the winner** (+1.1% over baseline). With 8K samples, the model has enough data to benefit from the regularization effect. Previously at 3K samples it hurt because the model couldn't learn enough signal. The val accuracy curve shows steady improvement through epoch 73 with no signs of overfitting.
+
+2. **Higher LR + batch size was neutral**. Same ~95.1% val top-1 but took 101 epochs (vs 77 baseline). Train accuracy dropped to ~54% — the model struggled to learn the augmented training set with 2x LR. The larger batch size (128) halved batches/epoch from 127 to 64, which combined with higher LR made optimization less stable.
+
+3. **Less augmentation was harmful** (-0.3%). Reducing RandomApply from p=0.85 to p=0.7 caused the model to converge faster (epoch 46) but at a lower ceiling. The strong augmentation is still justified — even with 8K samples, the model benefits from aggressive regularization to generalize on real broadcast footage.
+
+### Comparison: All-Time Ranking (updated)
+
+| Rank | Config | Val Top-1 | Dataset | Key Change |
+|------|--------|-----------|---------|-----------|
+| **1** | **#21 `hp-label-smooth`** | **~96.2%** | **real + synth** | **label_smoothing=0.1** |
+| 2 | #19 baseline (synth) | ~95.1% | real + synth | Default config |
+| 2 | #20 `hp-lr-bs` | ~95.1% | real + synth | lr=1e-3, bs=128 |
+| 4 | #22 `hp-less-aug` | ~94.8% | real + synth | RandomApply p=0.7 |
+| 5 | #17 `zc_strong_all` | ~93-94% | real only | Original best |
+| 5 | #1 `jpeg_noise_focus` | ~93-94% | real only | Just JPEG + noise |
+
+---
+
 ## Recommendations
 
-1. **Current best**: `zc_strong_all` + synthetic data = **~95.1% val top-1** (Experiment #19). This is the default config now.
+1. **Current best**: `label_smoothing=0.1` + synthetic data = **~96.2% val top-1** (Experiment #21). Should be baked into defaults.
 2. **Synthetic data works**: +1-2% val accuracy from adding 5,197 synthetic images for 22 underrepresented classes. Model converges in half the epochs.
-3. **Key insight**: Stronger augmentation intensity across the board (Phase 6) recovers accuracy lost by adding more augmentation types (Phases 4-5). Synthetic data for rare classes pushes accuracy further.
-4. **Train accuracy gap is healthy**: ~80% train vs ~95% val means strong augmentation prevents overfitting while pretrained features generalize well.
-5. **Drop pixelate and bilinear** from moderate configs — they don't help at moderate intensity. But at strong intensity (as in `zc_strong_all`), the full suite works.
+3. **Label smoothing now helps**: With 8K samples, label_smoothing=0.1 adds another +1.1%. This was harmful at 3K samples — the dataset size threshold for label smoothing benefit is somewhere in between.
+4. **Keep strong augmentation**: RandomApply p=0.85 is still optimal. Reducing it hurts even with more data.
+5. **Don't increase LR**: 5e-4 remains the sweet spot. 1e-3 doesn't improve accuracy and destabilizes training.
 6. **Rotation is already covered** by `RandomAffine(degrees=15)` in all configs
 
 ## Technical Details
