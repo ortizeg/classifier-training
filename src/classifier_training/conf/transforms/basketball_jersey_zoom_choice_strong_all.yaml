@@ -1,0 +1,105 @@
+# all_moderate_zoom_choice + STRONG EVERYTHING
+# Cumulative: stronger blur + stronger zoom + strong all degradations.
+# RandomApply p=0.85 (15% clean), all degradation probabilities and intensities raised.
+
+image_size: 224
+
+train_transforms:
+  _target_: torchvision.transforms.v2.Compose
+  transforms:
+    - _target_: torchvision.transforms.v2.RandomResizedCrop
+      size: ${transforms.image_size}
+    - _target_: torchvision.transforms.v2.RandomAffine
+      degrees: 15
+      translate:
+        - 0.1
+        - 0.1
+      scale:
+        - 0.85
+        - 1.15
+    - _target_: torchvision.transforms.v2.RandomPerspective
+      distortion_scale: 0.2
+      p: 0.3
+    - _target_: torchvision.transforms.v2.ColorJitter
+      brightness: 0.2
+      contrast: 0.2
+      saturation: 0.2
+      hue: 0.1
+    # STRONGER blur
+    - _target_: torchvision.transforms.v2.GaussianBlur
+      kernel_size: 7
+      sigma:
+        - 0.5
+        - 3.5
+    # STRONGER: p=0.85 (was 0.7) — only 15% clean pass-through
+    - _target_: torchvision.transforms.v2.RandomApply
+      p: 0.85
+      transforms:
+        # STRONGER JPEG: p=0.7 (was 0.55), quality 5-55 (was 15-75)
+        - _target_: classifier_training.transforms.RandomJPEGCompression
+          quality_min: 5
+          quality_max: 55
+          p: 0.7
+        # STRONGER pixelate: p=0.4 (was 0.25), scale 0.1-0.5 (was 0.2-0.7)
+        - _target_: classifier_training.transforms.RandomPixelate
+          scale_min: 0.1
+          scale_max: 0.5
+          p: 0.4
+        # STRONGER bilinear: p=0.5 (was 0.25), scale 0.1-0.45 (was 0.25-0.7)
+        - _target_: classifier_training.transforms.RandomBilinearDownscale
+          scale_min: 0.1
+          scale_max: 0.45
+          p: 0.5
+        # STRONGER noise: p=0.6 (was 0.45), sigma 10-40 (was 5-28)
+        - _target_: classifier_training.transforms.RandomGaussianNoise
+          sigma_min: 10.0
+          sigma_max: 40.0
+          p: 0.6
+        # STRONGER zoom (from config 2)
+        - _target_: torchvision.transforms.v2.RandomChoice
+          transforms:
+            - _target_: classifier_training.transforms.RandomZoomIn
+              min_scale: 0.5
+              max_scale: 1.0
+              p: 1.0
+            - _target_: classifier_training.transforms.RandomZoomOut
+              min_scale: 1.1
+              max_scale: 2.0
+              p: 1.0
+    - _target_: classifier_training.transforms.ToFloat32Tensor
+      scale: true
+    - _target_: torchvision.transforms.v2.Normalize
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+    # STRONGER erasing: p=0.3 (was 0.2), scale 0.02-0.2 (was 0.02-0.15)
+    - _target_: torchvision.transforms.v2.RandomErasing
+      p: 0.3
+      scale:
+        - 0.02
+        - 0.2
+
+val_transforms:
+  _target_: torchvision.transforms.v2.Compose
+  transforms:
+    - _target_: torchvision.transforms.v2.Resize
+      size: 256
+    - _target_: torchvision.transforms.v2.CenterCrop
+      size: ${transforms.image_size}
+    - _target_: classifier_training.transforms.ToFloat32Tensor
+      scale: true
+    - _target_: torchvision.transforms.v2.Normalize
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
+
+test_transforms:
+  _target_: torchvision.transforms.v2.Compose
+  transforms:
+    - _target_: torchvision.transforms.v2.Resize
+      size: 256
+    - _target_: torchvision.transforms.v2.CenterCrop
+      size: ${transforms.image_size}
+    - _target_: classifier_training.transforms.ToFloat32Tensor
+      scale: true
+    - _target_: torchvision.transforms.v2.Normalize
+      mean: [0.485, 0.456, 0.406]
+      std: [0.229, 0.224, 0.225]
