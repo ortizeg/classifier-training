@@ -1,0 +1,7 @@
+data_root: /Users/ortizeg/1Projects/⛹️‍♂️ Next Play/data/basketball-jersey-numbers-ocr
+output_dir: ${data_root}/train/synthetic
+image_size: 96
+target_per_class: 200
+threshold: 100
+font_dir: fonts/
+seed: 42
