@@ -424,6 +424,31 @@ With 2.8x more training data (8,088 samples), we revisited three hyperparameters
 
 ---
 
+## Results Summary (Phases 8-9)
+
+### Progression from Pre-Synth Baseline
+
+| Metric | #17 `zc_strong_all` (real only) | #21 `hp-label-smooth` (real + synth) | Delta |
+|--------|-------------------------------|--------------------------------------|-------|
+| Val Top-1 | ~93-94% | **~96.2%** | **+2-3%** |
+| Val Top-5 | ~98% | ~99% | +1% |
+| Train Top-1 | ~85-90% | ~82.7% | -3-7% (more data + label smoothing) |
+| Train samples | 2,930 | 8,088 | +176% |
+| Early Stop Epoch | 150 | 73 | -77 (converges 2x faster) |
+
+### All Experiments (Phases 8-9)
+
+| # | Config | Best Val Top-1 | Early Stop Epoch | Train Top-1 | Val Top-5 | Val Loss |
+|---|--------|---------------|------------------|-------------|-----------|----------|
+| 19 | `jersey-ocr-training` (real + synth, baseline) | ~95.1% | 77 | ~80% | ~99% | 0.204 |
+| 20 | `hp-lr-bs` (lr=1e-3, bs=128) | ~95.1% | 101 | ~54% | ~99% | 0.224 |
+| **21** | **`hp-label-smooth` (ls=0.1)** | **~96.2%** | **73** | **~82.7%** | **~99%** | **1.094*** |
+| 22 | `hp-less-aug` (RandomApply p=0.7) | ~94.8% | 46 | ~70.1% | ~99% | 0.209 |
+
+*Val loss is higher with label smoothing because the loss function penalizes confident predictions by design. This is expected — val accuracy is the true metric.
+
+---
+
 ## Recommendations
 
 1. **Current best**: `label_smoothing=0.1` + synthetic data = **~96.2% val top-1** (Experiment #21). Should be baked into defaults.
