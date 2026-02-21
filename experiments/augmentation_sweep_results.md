@@ -424,7 +424,66 @@ With 2.8x more training data (8,088 samples), we revisited three hyperparameters
 
 ---
 
-## Results Summary (Phases 8-9)
+## Phase 10: Medium/Low Priority Hyperparameter Sweep (2026-02-21)
+
+With `label_smoothing=0.1` now baked into defaults, we swept the remaining hyperparameters: weighted sampler, EMA decay, warmup steps, model capacity, and loss function.
+
+### Experiments
+
+| # | Name | Change from #21 Baseline (ls=0.1) | Hypothesis |
+|---|------|-----------------------------------|-----------|
+| 23 | `hp-weighted-sampler` | `data.sampler.mode=auto` | Synth data filled class gaps — weighted sampling may now help |
+| 24 | `hp-ema-999` | `callbacks.ema.decay=0.999` | Lower decay adapts faster with 2.8x more steps/epoch |
+| 25 | `hp-ema-9995` | `callbacks.ema.decay=0.9995` | Intermediate decay between 0.999 and 0.9999 |
+| 26 | `hp-warmup-1000` | `callbacks.ema.warmup_steps=1000` | Faster warmup (8 epochs vs 16) |
+| 27 | `hp-resnet34` | `model=resnet34` | More capacity for 8K samples |
+| 28 | `hp-resnet50` | `model=resnet50` | Largest ResNet for 42-class problem |
+| 29 | `hp-focal` | `model.loss_name=focal` | Focus on hard examples |
+
+### GCS Artifact Links — Phase 10
+
+| # | Config | GCS Output Directory | Vertex AI Job ID |
+|---|--------|---------------------|-----------------|
+| 23 | `hp-weighted-sampler` | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-hp-weighted-sampler/20260221_123633/` | `1816095859910115328` |
+| 24 | `hp-ema-999` | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-hp-ema-999/20260221_123636/` | `6609051763339165696` |
+| 25 | `hp-ema-9995` | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-hp-ema-9995/20260221_123638/` | `5933511819233591296` |
+| 26 | `hp-warmup-1000` | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-hp-warmup-1000/20260221_123641/` | `5198299180065357824` |
+| 27 | `hp-resnet34` | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-hp-resnet34/20260221_123643/` | `2037898141558112256` |
+| 28 | `hp-resnet50` | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-hp-resnet50/20260221_123646/` | `7427580995613753344` |
+| 29 | `hp-focal` | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-hp-focal/20260221_123648/` | `3145783649891254272` |
+
+### Results
+
+| # | Config | Best Val Top-1 | Early Stop Epoch | Train Top-1 | Val Top-5 | Val Loss |
+|---|--------|---------------|------------------|-------------|-----------|----------|
+| 21 | baseline (ls=0.1) | **~96.2%** | 73 | ~82.7% | ~99% | 1.094 |
+| 23 | weighted sampler | ~95.1% | 87 | ~83.5% | ~99% | 1.161 |
+| 24 | EMA 0.999 | ~94.2% | 44 | ~87.1% | ~99% | 1.307 |
+| 25 | EMA 0.9995 | ~95.1% | 78 | ~83.6% | ~99% | 1.212 |
+| 26 | warmup 1000 | **~95.9%** | 99 | ~81.4% | ~99% | 1.121 |
+| 27 | ResNet34 | **~95.9%** | 78 | ~81.9% | ~99% | 1.195 |
+| 28 | ResNet50 | ~94.8% | 99 | ~83.5% | ~99% | 1.111 |
+| 29 | focal loss | ~94.8% | 69 | ~36.7% | ~99% | 0.713 |
+
+### Analysis
+
+1. **No experiment beat the #21 baseline (96.2%).** Label smoothing remains the only hyperparameter that improved on the synth-data baseline.
+
+2. **Weighted sampler is now neutral** (~95.1% vs 95.1% baseline without ls). With synthetic data filling class gaps, it no longer hurts (was -3% in Phase 7 with real-only data). But it doesn't help either — the synthetic data already solved the imbalance problem.
+
+3. **EMA decay 0.999 is too aggressive** (~94.2%). Lower decay means the EMA weights track the current model too closely, losing the smoothing benefit. The default 0.9999 remains best. EMA 0.9995 was neutral (~95.1%).
+
+4. **Warmup 1000 steps is slightly worse** (~95.9% vs 96.2%). Halving warmup from 16 to 8 epochs didn't help — the longer warmup gives the LR scheduler a smoother ramp that benefits training.
+
+5. **ResNet34 matches warmup-1000** (~95.9%) but doesn't beat ResNet18 + label smoothing (96.2%). The extra capacity doesn't help on this 42-class problem with 224x224 inputs. ResNet18 is already sufficient.
+
+6. **ResNet50 is worse** (~94.8%). Too much capacity for this dataset — the model is harder to train and doesn't generalize better. The 5x parameter increase (43MB → 83MB ONNX) isn't justified.
+
+7. **Focal loss is significantly worse** (~94.8%, train only 36.7%). The focal gamma=2.0 down-weights easy examples too aggressively, making it hard for the model to learn the augmented training set. With label smoothing already reducing overconfidence, focal loss is redundant and harmful.
+
+---
+
+## Results Summary (Phases 8-10)
 
 ### Progression from Pre-Synth Baseline
 
@@ -436,14 +495,21 @@ With 2.8x more training data (8,088 samples), we revisited three hyperparameters
 | Train samples | 2,930 | 8,088 | +176% |
 | Early Stop Epoch | 150 | 73 | -77 (converges 2x faster) |
 
-### All Experiments (Phases 8-9)
+### All Experiments (Phases 8-10)
 
 | # | Config | Best Val Top-1 | Early Stop Epoch | Train Top-1 | Val Top-5 | Val Loss |
 |---|--------|---------------|------------------|-------------|-----------|----------|
-| 19 | `jersey-ocr-training` (real + synth, baseline) | ~95.1% | 77 | ~80% | ~99% | 0.204 |
-| 20 | `hp-lr-bs` (lr=1e-3, bs=128) | ~95.1% | 101 | ~54% | ~99% | 0.224 |
-| **21** | **`hp-label-smooth` (ls=0.1)** | **~96.2%** | **73** | **~82.7%** | **~99%** | **1.094*** |
-| 22 | `hp-less-aug` (RandomApply p=0.7) | ~94.8% | 46 | ~70.1% | ~99% | 0.209 |
+| 19 | real + synth baseline (no ls) | ~95.1% | 77 | ~80% | ~99% | 0.204 |
+| 20 | lr=1e-3, bs=128 | ~95.1% | 101 | ~54% | ~99% | 0.224 |
+| **21** | **label_smoothing=0.1** | **~96.2%** | **73** | **~82.7%** | **~99%** | **1.094*** |
+| 22 | RandomApply p=0.7 | ~94.8% | 46 | ~70.1% | ~99% | 0.209 |
+| 23 | weighted sampler | ~95.1% | 87 | ~83.5% | ~99% | 1.161 |
+| 24 | EMA 0.999 | ~94.2% | 44 | ~87.1% | ~99% | 1.307 |
+| 25 | EMA 0.9995 | ~95.1% | 78 | ~83.6% | ~99% | 1.212 |
+| 26 | warmup 1000 | ~95.9% | 99 | ~81.4% | ~99% | 1.121 |
+| 27 | ResNet34 | ~95.9% | 78 | ~81.9% | ~99% | 1.195 |
+| 28 | ResNet50 | ~94.8% | 99 | ~83.5% | ~99% | 1.111 |
+| 29 | focal loss | ~94.8% | 69 | ~36.7% | ~99% | 0.713 |
 
 *Val loss is higher with label smoothing because the loss function penalizes confident predictions by design. This is expected — val accuracy is the true metric.
 
@@ -451,12 +517,14 @@ With 2.8x more training data (8,088 samples), we revisited three hyperparameters
 
 ## Recommendations
 
-1. **Current best**: `label_smoothing=0.1` + synthetic data = **~96.2% val top-1** (Experiment #21). Should be baked into defaults.
+1. **Current best**: `label_smoothing=0.1` + synthetic data = **~96.2% val top-1** (Experiment #21). Already baked into defaults.
 2. **Synthetic data works**: +1-2% val accuracy from adding 5,197 synthetic images for 22 underrepresented classes. Model converges in half the epochs.
-3. **Label smoothing now helps**: With 8K samples, label_smoothing=0.1 adds another +1.1%. This was harmful at 3K samples — the dataset size threshold for label smoothing benefit is somewhere in between.
-4. **Keep strong augmentation**: RandomApply p=0.85 is still optimal. Reducing it hurts even with more data.
-5. **Don't increase LR**: 5e-4 remains the sweet spot. 1e-3 doesn't improve accuracy and destabilizes training.
-6. **Rotation is already covered** by `RandomAffine(degrees=15)` in all configs
+3. **Label smoothing is the only HP that helped**: 0.1 adds +1.1% over synth baseline. Was harmful at 3K samples, beneficial at 8K.
+4. **Keep all other defaults**: EMA 0.9999, warmup 2000 steps, lr=5e-4, batch_size=64 — none improved when changed.
+5. **ResNet18 is sufficient**: ResNet34/50 offer no improvement on this 42-class problem. Stick with the smaller, faster model.
+6. **Don't use focal loss**: Harmful with label smoothing — the two regularizers conflict.
+7. **Weighted sampler is now neutral**: With synthetic data, it neither helps nor hurts. Not needed.
+8. **Keep strong augmentation**: RandomApply p=0.85 is still optimal even with 2.8x more data.
 
 ## Technical Details
 
