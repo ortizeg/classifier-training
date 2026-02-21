@@ -12,7 +12,7 @@ early_stopping:
   _target_: lightning.pytorch.callbacks.EarlyStopping
   monitor: val/acc_top1
   mode: max
-  patience: 10
+  patience: 20
   min_delta: 0.001
 
 lr_monitor:
@@ -38,7 +38,7 @@ onnx_export:
 confusion_matrix:
   _target_: classifier_training.callbacks.confusion_matrix.ConfusionMatrixCallback
   output_dir: ${hydra:runtime.output_dir}
-  num_classes: 43
+  num_classes: 42
 
 model_info:
   _target_: classifier_training.callbacks.model_info.ModelInfoCallback

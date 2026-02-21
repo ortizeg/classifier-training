@@ -9,21 +9,23 @@ from loguru import logger
 from PIL import Image
 from torch.utils.data import Dataset
 
+from classifier_training.data.utils import get_files
+
 
 class JerseyNumberDataset(Dataset[tuple[torch.Tensor, int]]):
-    """Dataset for flat-directory JSONL-annotated image classification.
+    """Dataset for JSONL-annotated image classification.
 
-    The basketball-jersey-numbers-ocr dataset is NOT ImageFolder-compatible:
-    images are in flat directories (no class subdirs). Each split has a single
-    annotations.jsonl where each line is:
-        {"image": "filename.jpg", "prefix": "Read the number.", "suffix": "<label>"}
+    Recursively discovers all ``annotations.jsonl`` files under ``root`` and
+    merges their entries.  Image paths are resolved relative to each annotation
+    file's parent directory, so real and synthetic data can coexist in
+    subdirectories under the same split root.
 
-    One annotation row = one training sample. Some images appear in multiple rows
-    (different label per crop annotation). Build samples from annotation rows,
-    NOT from the image file list — len(dataset) = len(annotation_rows).
+    Each annotation row is one training sample.  Some images may appear in
+    multiple rows (different label per crop annotation).  ``len(dataset)``
+    equals the total number of annotation rows across all discovered files.
 
     Args:
-        root: Split directory containing flat image files and annotations.jsonl.
+        root: Split directory to search recursively for ``.jsonl`` files.
         class_to_idx: Alphabetically-ordered mapping from label string to integer.
             MUST be built from train split only and shared across val/test.
         transform: Optional callable applied to PIL Image, returns torch.Tensor.
@@ -40,19 +42,22 @@ class JerseyNumberDataset(Dataset[tuple[torch.Tensor, int]]):
         self.transform = transform
         self.samples: list[tuple[Path, int]] = []
 
-        ann_path = root / "annotations.jsonl"
-        with open(ann_path) as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                record = json.loads(line)
-                img_path = root / record["image"]
-                label_idx = class_to_idx[record["suffix"]]
-                self.samples.append((img_path, label_idx))
+        ann_files = get_files(root, (".jsonl",))
+        for ann_path in ann_files:
+            ann_dir = ann_path.parent
+            with open(ann_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    record = json.loads(line)
+                    img_path = ann_dir / record["image"]
+                    label_idx = class_to_idx[record["suffix"]]
+                    self.samples.append((img_path, label_idx))
 
         logger.debug(
-            f"JerseyNumberDataset: loaded {len(self.samples)} samples from {ann_path}"
+            f"JerseyNumberDataset: loaded {len(self.samples)} samples "
+            f"from {len(ann_files)} annotation file(s) under {root}"
         )
 
     def __len__(self) -> int:

@@ -158,11 +158,7 @@ class RandomGaussianNoise(v2.Transform):
 
         sigma = random.uniform(self.sigma_min, self.sigma_max)  # noqa: S311
         arr = np.array(img, dtype=np.float32)
-        noise = (
-            np.random.default_rng()
-            .normal(0.0, sigma, arr.shape)
-            .astype(np.float32)
-        )
+        noise = np.random.default_rng().normal(0.0, sigma, arr.shape).astype(np.float32)
         noisy = np.clip(arr + noise, 0, 255).astype(np.uint8)
         result = Image.fromarray(noisy, mode=img.mode)
 
@@ -268,9 +264,7 @@ class RandomZoomOut(v2.Transform):
         rest = inputs[1:]
 
         if not isinstance(img, Image.Image):
-            raise TypeError(
-                f"RandomZoomOut expects a PIL Image, got {type(img)}"
-            )
+            raise TypeError(f"RandomZoomOut expects a PIL Image, got {type(img)}")
 
         if random.random() >= self.p:  # noqa: S311
             return inputs if rest else img
@@ -335,9 +329,7 @@ class RandomZoomIn(v2.Transform):
         rest = inputs[1:]
 
         if not isinstance(img, Image.Image):
-            raise TypeError(
-                f"RandomZoomIn expects a PIL Image, got {type(img)}"
-            )
+            raise TypeError(f"RandomZoomIn expects a PIL Image, got {type(img)}")
 
         if random.random() >= self.p:  # noqa: S311
             return inputs if rest else img

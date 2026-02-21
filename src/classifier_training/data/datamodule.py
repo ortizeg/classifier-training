@@ -18,6 +18,7 @@ from classifier_training.data.sampler import (
     TrackingWeightedRandomSampler,
     build_sampler,
 )
+from classifier_training.data.utils import get_files
 from classifier_training.types import ClassificationBatch
 
 # ImageNet normalization statistics — stored here and written to labels_mapping.json.
@@ -37,8 +38,7 @@ class ImageFolderDataModule(L.LightningDataModule):
       - Val/Test: Resize(256) + CenterCrop + Normalize (deterministic only)
 
     class_to_idx is built from train split only, sorted alphabetically. The
-    empty-string class ("") is a legitimate class at index 0. All 43 classes
-    must be in the mapping.
+    All 42 digit classes must be in the mapping.
 
     Args:
         config: DataModuleConfig frozen model with all DataLoader parameters.
@@ -136,7 +136,7 @@ class ImageFolderDataModule(L.LightningDataModule):
 
     @property
     def num_classes(self) -> int:
-        """Total number of classes (43 for basketball jersey numbers dataset)."""
+        """Total number of classes (42 for basketball jersey numbers dataset)."""
         return len(self.class_to_idx)
 
     def _build_class_to_idx(self) -> None:
@@ -146,19 +146,22 @@ class ImageFolderDataModule(L.LightningDataModule):
         - Built from train only (val/test may not cover all classes).
         - Alphabetical sort: "" < "0" < "00" < "1" < "10" < ... (lexicographic).
         - "" (empty string) gets index 0 — represents unreadable jersey numbers.
-        - Must have exactly 43 classes for basketball jersey numbers dataset.
+        - Must have exactly 42 classes for basketball jersey numbers dataset.
         """
-        ann_path = self._data_root / "train" / "annotations.jsonl"
+        train_root = self._data_root / "train"
+        ann_files = get_files(train_root, (".jsonl",))
         classes: set[str] = set()
-        with open(ann_path) as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                classes.add(json.loads(line)["suffix"])
+        for ann_path in ann_files:
+            with open(ann_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    classes.add(json.loads(line)["suffix"])
         self._class_to_idx = {cls: i for i, cls in enumerate(sorted(classes))}
         logger.info(
-            f"Built class_to_idx: {len(self._class_to_idx)} classes from {ann_path}"
+            f"Built class_to_idx: {len(self._class_to_idx)} classes "
+            f"from {len(ann_files)} annotation file(s) under {train_root}"
         )
         logger.debug(f"class_to_idx: {self._class_to_idx}")
 
