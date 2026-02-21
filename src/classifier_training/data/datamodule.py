@@ -144,8 +144,8 @@ class ImageFolderDataModule(L.LightningDataModule):
 
         CRITICAL invariants:
         - Built from train only (val/test may not cover all classes).
-        - Alphabetical sort: "" < "0" < "00" < "1" < "10" < ... (lexicographic).
-        - "" (empty string) gets index 0 — represents unreadable jersey numbers.
+        - Alphabetical sort: "0" < "00" < "1" < "10" < ... (lexicographic).
+        - Empty-string suffixes are excluded (unreadable crops).
         - Must have exactly 42 classes for basketball jersey numbers dataset.
         """
         train_root = self._data_root / "train"
@@ -157,7 +157,9 @@ class ImageFolderDataModule(L.LightningDataModule):
                     line = line.strip()
                     if not line:
                         continue
-                    classes.add(json.loads(line)["suffix"])
+                    suffix = json.loads(line)["suffix"]
+                    if suffix:  # skip empty-string labels
+                        classes.add(suffix)
         self._class_to_idx = {cls: i for i, cls in enumerate(sorted(classes))}
         logger.info(
             f"Built class_to_idx: {len(self._class_to_idx)} classes "

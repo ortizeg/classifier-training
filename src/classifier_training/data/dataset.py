@@ -43,6 +43,7 @@ class JerseyNumberDataset(Dataset[tuple[torch.Tensor, int]]):
         self.samples: list[tuple[Path, int]] = []
 
         ann_files = get_files(root, (".jsonl",))
+        skipped = 0
         for ann_path in ann_files:
             ann_dir = ann_path.parent
             with open(ann_path) as f:
@@ -51,9 +52,18 @@ class JerseyNumberDataset(Dataset[tuple[torch.Tensor, int]]):
                     if not line:
                         continue
                     record = json.loads(line)
+                    suffix = record["suffix"]
+                    if suffix not in class_to_idx:
+                        skipped += 1
+                        continue
                     img_path = ann_dir / record["image"]
-                    label_idx = class_to_idx[record["suffix"]]
+                    label_idx = class_to_idx[suffix]
                     self.samples.append((img_path, label_idx))
+        if skipped:
+            logger.warning(
+                f"Skipped {skipped} annotation(s) with unknown labels "
+                f"under {root}"
+            )
 
         logger.debug(
             f"JerseyNumberDataset: loaded {len(self.samples)} samples "
