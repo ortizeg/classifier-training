@@ -11,16 +11,19 @@ train_transforms:
     - _target_: torchvision.transforms.v2.RandomResizedCrop
       size: ${transforms.image_size}
     - _target_: torchvision.transforms.v2.RandomAffine
-      degrees: 15
+      degrees: 25
       translate:
         - 0.1
         - 0.1
       scale:
         - 0.85
         - 1.15
+      shear:
+        - -15
+        - 15
     - _target_: torchvision.transforms.v2.RandomPerspective
-      distortion_scale: 0.2
-      p: 0.3
+      distortion_scale: 0.3
+      p: 0.4
     - _target_: torchvision.transforms.v2.ColorJitter
       brightness: 0.2
       contrast: 0.2
