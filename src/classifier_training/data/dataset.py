@@ -41,6 +41,7 @@ class JerseyNumberDataset(Dataset[tuple[torch.Tensor, int]]):
         self.class_to_idx = class_to_idx
         self.transform = transform
         self.samples: list[tuple[Path, int]] = []
+        self.metadata: list[dict[str, object] | None] = []
 
         ann_files = get_files(root, (".jsonl",))
         skipped = 0
@@ -59,6 +60,7 @@ class JerseyNumberDataset(Dataset[tuple[torch.Tensor, int]]):
                     img_path = ann_dir / record["image"]
                     label_idx = class_to_idx[suffix]
                     self.samples.append((img_path, label_idx))
+                    self.metadata.append(record.get("metadata"))
         if skipped:
             logger.warning(
                 f"Skipped {skipped} annotation(s) with unknown labels "
