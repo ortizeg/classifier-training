@@ -58,3 +58,4 @@ prod = []
 classifier-training = { path = ".", editable = true }
 onnxruntime = ">=1.23.2, <2"
 wandb = ">=0.19,<1.0"
+orjson = ">=3.10,<4"

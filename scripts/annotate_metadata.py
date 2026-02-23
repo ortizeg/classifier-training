@@ -9,6 +9,7 @@ Usage::
     python scripts/annotate_metadata.py --data-root /path/to/dataset
     python scripts/annotate_metadata.py --data-root /path/to/dataset --mode multi
     python scripts/annotate_metadata.py --data-root /path/to/dataset --dry-run --limit 5
+    python scripts/annotate_metadata.py --data-root /path/to/dataset --batch-size 16
 """
 
 from __future__ import annotations
@@ -70,8 +71,7 @@ MULTI_PROMPT_NUMBER = (
     "green, purple, orange, grey, maroon, teal, pink"
 )
 MULTI_PROMPT_BORDER = (
-    "Does the number have a visible border or outline around it? "
-    "Reply yes or no."
+    "Does the number have a visible border or outline around it? Reply yes or no."
 )
 
 
@@ -156,10 +156,11 @@ def _auto_device() -> tuple[str, str]:
     return "cpu", "float16"
 
 
-def _load_model(
-    model_name: str, device: str, dtype_str: str
-) -> tuple[object, object]:
+def _load_model(model_name: str, device: str, dtype_str: str) -> tuple[object, object]:
     """Load SmolVLM2 model and processor.
+
+    Uses flash_attention_2 on CUDA for faster inference.
+    Applies torch.compile on CUDA for additional speedup.
 
     Returns (processor, model) tuple.
     """
@@ -169,13 +170,29 @@ def _load_model(
     dtype_map = {"bfloat16": torch.bfloat16, "float16": torch.float16}
     dtype = dtype_map.get(dtype_str, torch.float16)
 
-    logger.info(f"Loading model {model_name} on {device} ({dtype_str})")
+    # Try flash_attention_2 on CUDA, fall back to eager if not installed
+    attn_impl = "eager"
+    if device == "cuda":
+        try:
+            import flash_attn  # noqa: F401
+
+            attn_impl = "flash_attention_2"
+        except ImportError:
+            logger.info("flash_attn not installed, using eager attention")
+
+    logger.info(
+        f"Loading model {model_name} on {device} ({dtype_str}, attn={attn_impl})"
+    )
     processor = AutoProcessor.from_pretrained(model_name)
     model = AutoModelForImageTextToText.from_pretrained(
         model_name,
         dtype=dtype,
-        _attn_implementation="eager",
+        _attn_implementation=attn_impl,
     ).to(device)
+
+    if device == "cuda":
+        model = torch.compile(model)
+        logger.info("Applied torch.compile to model")
 
     return processor, model
 
@@ -193,10 +210,12 @@ def _generate(
 
     messages: list[dict[str, object]] = []
     if system_text:
-        messages.append({
-            "role": "system",
-            "content": [{"type": "text", "text": system_text}],
-        })
+        messages.append(
+            {
+                "role": "system",
+                "content": [{"type": "text", "text": system_text}],
+            }
+        )
 
     messages.append(
         {
@@ -217,12 +236,83 @@ def _generate(
     ).to(device)
 
     with torch.inference_mode():
-        output_ids = model.generate(**inputs, max_new_tokens=128)  # type: ignore[union-attr]
+        output_ids = model.generate(**inputs, max_new_tokens=64)  # type: ignore[union-attr]
 
     # Decode only newly generated tokens
     prompt_len = inputs["input_ids"].shape[-1]
     generated = output_ids[0][prompt_len:]
     return processor.decode(generated, skip_special_tokens=True)  # type: ignore[union-attr]
+
+
+def _generate_batch(
+    processor: object,
+    model: object,
+    images: list[object],
+    user_text: str,
+    system_text: str | None = None,
+    device: str = "cpu",
+) -> list[str]:
+    """Generate text for a batch of images sharing the same prompt.
+
+    All images are processed with padding in a single model.generate() call
+    for significantly faster throughput on GPU.
+    """
+    import torch
+
+    if not images:
+        return []
+
+    # Build per-image messages
+    all_messages = []
+    for image in images:
+        messages: list[dict[str, object]] = []
+        if system_text:
+            messages.append(
+                {
+                    "role": "system",
+                    "content": [{"type": "text", "text": system_text}],
+                }
+            )
+        messages.append(
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image", "image": image},
+                    {"type": "text", "text": user_text},
+                ],
+            }
+        )
+        all_messages.append(messages)
+
+    # Get text representations via chat template (non-tokenized)
+    texts = [
+        processor.apply_chat_template(  # type: ignore[union-attr]
+            msgs, add_generation_prompt=True, tokenize=False
+        )
+        for msgs in all_messages
+    ]
+
+    # Batch-process with padding
+    # Each text references one image, so images must be list-of-lists
+    batch_images = [[img] for img in images]
+    inputs = processor(  # type: ignore[operator]
+        text=texts,
+        images=batch_images,
+        return_tensors="pt",
+        padding=True,
+    ).to(device)
+
+    with torch.inference_mode():
+        output_ids = model.generate(**inputs, max_new_tokens=64)  # type: ignore[union-attr]
+
+    # Decode each output individually
+    prompt_len = inputs["input_ids"].shape[-1]
+    results = []
+    for i in range(len(images)):
+        generated = output_ids[i][prompt_len:]
+        text = processor.decode(generated, skip_special_tokens=True)  # type: ignore[union-attr]
+        results.append(text)
+    return results
 
 
 def annotate_single(
@@ -236,6 +326,19 @@ def annotate_single(
         processor, model, image, SINGLE_PROMPT_USER, SINGLE_PROMPT_SYSTEM, device
     )
     return parse_single_response(response)
+
+
+def annotate_single_batch(
+    processor: object,
+    model: object,
+    images: list[object],
+    device: str,
+) -> list[dict[str, object] | None]:
+    """Annotate a batch of images using single-mode (one JSON prompt each)."""
+    responses = _generate_batch(
+        processor, model, images, SINGLE_PROMPT_USER, SINGLE_PROMPT_SYSTEM, device
+    )
+    return [parse_single_response(r) for r in responses]
 
 
 def annotate_multi(
@@ -261,9 +364,7 @@ SAVE_INTERVAL = 100  # Save progress every N new annotations
 
 def _atomic_write(ann_path: Path, records: list[dict[str, object]]) -> None:
     """Atomically write records back to JSONL file."""
-    updated_lines = [
-        json.dumps(r, ensure_ascii=False) for r in records
-    ]
+    updated_lines = [json.dumps(r, ensure_ascii=False) for r in records]
     tmp_path = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -289,8 +390,12 @@ def process_annotation_file(
     mode: str,
     dry_run: bool,
     limit: int | None,
+    batch_size: int = 8,
 ) -> tuple[int, int]:
     """Process a single annotation file, adding metadata in-place.
+
+    In single mode, collects up to ``batch_size`` unannotated images and
+    processes them in a single batched generation call for faster throughput.
 
     Saves progress every SAVE_INTERVAL new annotations so work
     is not lost if the process is interrupted.
@@ -310,7 +415,44 @@ def process_annotation_file(
     skipped = 0
     unsaved = 0  # New annotations since last save
 
-    for _i, record in enumerate(records):
+    # Collect unannotated records for batching
+    pending: list[tuple[int, object]] = []  # (record_idx, PIL image)
+
+    def _flush_batch() -> tuple[int, int]:
+        """Process a pending batch and return (annotated, skipped) delta."""
+        nonlocal unsaved
+        if not pending:
+            return 0, 0
+
+        batch_annotated = 0
+        batch_skipped = 0
+
+        if mode == "single":
+            images = [img for _, img in pending]
+            results = annotate_single_batch(processor, model, images, device)
+            for (rec_idx, _img), metadata in zip(pending, results, strict=True):
+                if metadata is None:
+                    logger.warning(
+                        f"Failed to parse response for "
+                        f"{records[rec_idx]['image']}, skipping"
+                    )
+                    batch_skipped += 1
+                    continue
+                records[rec_idx]["metadata"] = metadata
+                batch_annotated += 1
+                unsaved += 1
+        else:
+            # Multi-mode: still per-image (3 prompts each)
+            for rec_idx, img in pending:
+                metadata = annotate_multi(processor, model, img, device)
+                records[rec_idx]["metadata"] = metadata
+                batch_annotated += 1
+                unsaved += 1
+
+        pending.clear()
+        return batch_annotated, batch_skipped
+
+    for rec_idx, record in enumerate(records):
         if limit is not None and annotated >= limit:
             break
 
@@ -328,56 +470,40 @@ def process_annotation_file(
         if dry_run:
             img_name = record["image"]
             suffix = record["suffix"]
-            logger.info(
-                f"[DRY RUN] Would annotate: {img_name} "
-                f"(suffix={suffix})"
-            )
+            logger.info(f"[DRY RUN] Would annotate: {img_name} (suffix={suffix})")
             annotated += 1
             continue
 
         image = Image.open(img_path).convert("RGB")
+        pending.append((rec_idx, image))
 
-        if mode == "single":
-            metadata = annotate_single(
-                processor, model, image, device,
-            )
-            if metadata is None:
-                logger.warning(
-                    f"Failed to parse response for "
-                    f"{record['image']}, skipping"
+        # Flush when batch is full
+        if len(pending) >= batch_size:
+            batch_ann, batch_skip = _flush_batch()
+            annotated += batch_ann
+            skipped += batch_skip
+
+            if annotated % 10 == 0 and annotated > 0:
+                logger.info(f"  [{annotated}] {ann_path.name}")
+
+            # Periodic save to preserve progress
+            if unsaved >= SAVE_INTERVAL and not dry_run:
+                _atomic_write(ann_path, records)
+                logger.info(
+                    f"  Checkpoint: saved {annotated} annotations to {ann_path.name}"
                 )
-                skipped += 1
-                continue
-        else:
-            metadata = annotate_multi(
-                processor, model, image, device,
-            )
+                unsaved = 0
 
-        record["metadata"] = metadata
-        annotated += 1
-        unsaved += 1
-
-        if annotated % 10 == 0:
-            logger.info(
-                f"  [{annotated}] {ann_path.name}"
-            )
-
-        # Periodic save to preserve progress
-        if unsaved >= SAVE_INTERVAL and not dry_run:
-            _atomic_write(ann_path, records)
-            logger.info(
-                f"  Checkpoint: saved {annotated} "
-                f"annotations to {ann_path.name}"
-            )
-            unsaved = 0
+    # Flush remaining images
+    if pending:
+        batch_ann, batch_skip = _flush_batch()
+        annotated += batch_ann
+        skipped += batch_skip
 
     # Final save for any remaining unsaved work
     if unsaved > 0 and not dry_run:
         _atomic_write(ann_path, records)
-        logger.info(
-            f"Updated {ann_path} "
-            f"({annotated} new annotations)"
-        )
+        logger.info(f"Updated {ann_path} ({annotated} new annotations)")
 
     return annotated, skipped
 
@@ -421,6 +547,12 @@ def main() -> None:
         default="HuggingFaceTB/SmolVLM2-2.2B-Instruct",
         help="HuggingFace model name",
     )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=8,
+        help="Number of images to process in a single batch (default: 8)",
+    )
     args = parser.parse_args()
 
     split_dir = args.data_root / args.split
@@ -435,7 +567,8 @@ def main() -> None:
 
     logger.info(
         f"Found {len(ann_files)} annotation file(s) under {split_dir} "
-        f"(mode={args.mode}, dry_run={args.dry_run})"
+        f"(mode={args.mode}, batch_size={args.batch_size}, "
+        f"dry_run={args.dry_run})"
     )
 
     # Load model (skip for dry run)
@@ -451,7 +584,14 @@ def main() -> None:
     for ann_path in ann_files:
         logger.info(f"Processing {ann_path}...")
         annotated, skipped = process_annotation_file(
-            ann_path, processor, model, device, args.mode, args.dry_run, args.limit
+            ann_path,
+            processor,
+            model,
+            device,
+            args.mode,
+            args.dry_run,
+            args.limit,
+            args.batch_size,
         )
         total_annotated += annotated
         total_skipped += skipped
