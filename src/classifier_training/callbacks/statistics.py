@@ -96,8 +96,7 @@ class DatasetStatisticsCallback(L.Callback):
         total = len(metadata_list)
         with_meta = len(entries)
         logger.info(
-            f"Metadata coverage: {with_meta}/{total} "
-            f"({with_meta / total * 100:.1f}%)"
+            f"Metadata coverage: {with_meta}/{total} ({with_meta / total * 100:.1f}%)"
         )
 
         jersey_counts: Counter[str] = Counter()
@@ -138,6 +137,4 @@ class DatasetStatisticsCallback(L.Callback):
         console.print(color_table)
 
         # Border distribution
-        logger.info(
-            f"Border: yes={border_counts[True]}, no={border_counts[False]}"
-        )
+        logger.info(f"Border: yes={border_counts[True]}, no={border_counts[False]}")

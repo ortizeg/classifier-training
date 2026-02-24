@@ -61,6 +61,12 @@ def main(cfg: DictConfig) -> None:
     class_weights = datamodule.get_class_weights()  # type: ignore[attr-defined]
     model.set_class_weights(class_weights)  # type: ignore[operator]
 
+    # Pass class mappings to VLM models for validation response parsing
+    if hasattr(model, "set_class_mappings"):
+        class_to_idx: dict[str, int] = datamodule.class_to_idx  # type: ignore[attr-defined]
+        idx_to_class = {v: k for k, v in class_to_idx.items()}
+        model.set_class_mappings(class_to_idx, idx_to_class)  # type: ignore[operator]
+
     # Instantiate loggers
     loggers: list[Any] = []
     if cfg.get("logging"):

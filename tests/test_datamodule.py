@@ -166,9 +166,7 @@ class TestImageFolderDataModuleRealDataset:
     def test_class_to_idx_has_42_classes(self) -> None:
         """All 42 digit classes present (empty-string removed after dedup)."""
         dm = self._make_dm()
-        assert dm.num_classes == 42, (
-            f"Expected 42 classes, got {dm.num_classes}."
-        )
+        assert dm.num_classes == 42, f"Expected 42 classes, got {dm.num_classes}."
 
     def test_train_dataset_len_at_least_real_rows(self) -> None:
         """Train dataset has >= 2891 real rows (may include synthetic)."""

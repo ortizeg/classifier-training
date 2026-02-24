@@ -66,8 +66,19 @@ class TestParseSingleResponse:
 
     def test_all_valid_colors_accepted(self) -> None:
         valid = [
-            "white", "black", "red", "blue", "navy", "yellow",
-            "green", "purple", "orange", "grey", "maroon", "teal", "pink",
+            "white",
+            "black",
+            "red",
+            "blue",
+            "navy",
+            "yellow",
+            "green",
+            "purple",
+            "orange",
+            "grey",
+            "maroon",
+            "teal",
+            "pink",
         ]
         for color in valid:
             text = (

@@ -59,3 +59,7 @@ classifier-training = { path = ".", editable = true }
 onnxruntime = ">=1.23.2, <2"
 wandb = ">=0.19,<1.0"
 orjson = ">=3.10,<4"
+peft = ">=0.14,<1"
+
+[target.linux-64.pypi-dependencies]
+bitsandbytes = ">=0.45,<1"

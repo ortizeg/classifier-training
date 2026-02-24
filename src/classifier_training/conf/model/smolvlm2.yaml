@@ -1,0 +1,10 @@
+# Hydra config for SmolVLM2 LoRA fine-tuning
+_target_: classifier_training.models.smolvlm2.SmolVLM2ClassificationModel
+model_name: HuggingFaceTB/SmolVLM2-2.2B-Instruct
+num_classes: 43
+learning_rate: 2.0e-4
+weight_decay: 0.01
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+max_new_tokens: 16

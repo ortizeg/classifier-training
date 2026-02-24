@@ -117,21 +117,25 @@ class TestJerseyNumberDataset:
             img = Image.new("RGB", (224, 224), color=(100, 100, 100))
             img.save(split_dir / f"img_{i}.jpg")
         lines = [
-            json.dumps({
-                "image": "img_0.jpg",
-                "prefix": "Read the number.",
-                "suffix": "0",
-                "metadata": {
-                    "jersey_color": "blue",
-                    "number_color": "white",
-                    "border": False,
-                },
-            }),
-            json.dumps({
-                "image": "img_1.jpg",
-                "prefix": "Read the number.",
-                "suffix": "1",
-            }),
+            json.dumps(
+                {
+                    "image": "img_0.jpg",
+                    "prefix": "Read the number.",
+                    "suffix": "0",
+                    "metadata": {
+                        "jersey_color": "blue",
+                        "number_color": "white",
+                        "border": False,
+                    },
+                }
+            ),
+            json.dumps(
+                {
+                    "image": "img_1.jpg",
+                    "prefix": "Read the number.",
+                    "suffix": "1",
+                }
+            ),
         ]
         (split_dir / "annotations.jsonl").write_text("\n".join(lines) + "\n")
         ds = JerseyNumberDataset(split_dir, class_to_idx)

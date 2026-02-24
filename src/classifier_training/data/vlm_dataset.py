@@ -1,47 +1,44 @@
-"""JSONL-annotated image dataset for jersey number classification."""
+"""VLM dataset for jersey number classification fine-tuning."""
 
 import json
-from collections.abc import Callable
 from pathlib import Path
 
-import torch
 from loguru import logger
 from PIL import Image
 from torch.utils.data import Dataset
 
 from classifier_training.data.utils import get_files
+from classifier_training.inference.vlm_inferencer import VLM_PROMPT
 
 
-class JerseyNumberDataset(Dataset[tuple[torch.Tensor, int]]):
-    """Dataset for JSONL-annotated image classification.
+class VLMJerseyNumberDataset(Dataset[tuple[Image.Image, str, str]]):
+    """Wraps JSONL annotations for VLM fine-tuning.
 
-    Recursively discovers all ``annotations.jsonl`` files under ``root`` and
-    merges their entries.  Image paths are resolved relative to each annotation
-    file's parent directory, so real and synthetic data can coexist in
-    subdirectories under the same split root.
+    Each ``__getitem__`` returns:
+    - image: ``PIL.Image`` (RGB)
+    - prompt: str (user prompt asking for jersey number)
+    - answer: str (ground truth label from ``idx_to_class``)
 
-    Each annotation row is one training sample.  Some images may appear in
-    multiple rows (different label per crop annotation).  ``len(dataset)``
-    equals the total number of annotation rows across all discovered files.
+    No torchvision transforms are applied — the HF processor handles
+    image preprocessing during collation.
 
     Args:
         root: Split directory to search recursively for ``.jsonl`` files.
-        class_to_idx: Alphabetically-ordered mapping from label string to integer.
-            MUST be built from train split only and shared across val/test.
-        transform: Optional callable applied to PIL Image, returns torch.Tensor.
+        class_to_idx: Alphabetically-ordered mapping from label string to int.
+        prompt: User prompt template. Defaults to :data:`VLM_PROMPT`.
     """
 
     def __init__(
         self,
         root: Path,
         class_to_idx: dict[str, int],
-        transform: Callable[[Image.Image], torch.Tensor] | None = None,
+        prompt: str = VLM_PROMPT,
     ) -> None:
         self.root = root
         self.class_to_idx = class_to_idx
-        self.transform = transform
+        self.idx_to_class: dict[int, str] = {v: k for k, v in class_to_idx.items()}
+        self.prompt = prompt
         self.samples: list[tuple[Path, int]] = []
-        self.metadata: list[dict[str, object] | None] = []
 
         ann_files = get_files(root, (".jsonl",))
         skipped = 0
@@ -60,23 +57,20 @@ class JerseyNumberDataset(Dataset[tuple[torch.Tensor, int]]):
                     img_path = ann_dir / record["image"]
                     label_idx = class_to_idx[suffix]
                     self.samples.append((img_path, label_idx))
-                    self.metadata.append(record.get("metadata"))
         if skipped:
             logger.warning(
                 f"Skipped {skipped} annotation(s) with unknown labels under {root}"
             )
-
         logger.debug(
-            f"JerseyNumberDataset: loaded {len(self.samples)} samples "
+            f"VLMJerseyNumberDataset: loaded {len(self.samples)} samples "
             f"from {len(ann_files)} annotation file(s) under {root}"
         )
 
     def __len__(self) -> int:
         return len(self.samples)
 
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, int]:
-        img_path, label = self.samples[idx]
+    def __getitem__(self, idx: int) -> tuple[Image.Image, str, str]:
+        img_path, label_idx = self.samples[idx]
         img = Image.open(img_path).convert("RGB")
-        if self.transform is not None:
-            img = self.transform(img)  # type: ignore[assignment]
-        return img, label  # type: ignore[return-value]
+        answer = self.idx_to_class[label_idx]
+        return img, self.prompt, answer

@@ -34,7 +34,9 @@ class TestCollectStats:
             jersey_counts,
             number_counts,
             border_counts,
-            _jbc, _nbc, _bbc,
+            _jbc,
+            _nbc,
+            _bbc,
             total_with,
             total_without,
             _coverage,
@@ -62,9 +64,14 @@ class TestCollectStats:
             },
         ]
         (
-            _jc, _nc, _bc,
-            _jbc, _nbc, _bbc,
-            total_with, total_without,
+            _jc,
+            _nc,
+            _bc,
+            _jbc,
+            _nbc,
+            _bbc,
+            total_with,
+            total_without,
             coverage_by_class,
         ) = collect_stats(records)
 
@@ -100,8 +107,12 @@ class TestCollectStats:
             },
         ]
         (
-            _jc, _nc, _bc,
-            jersey_by_class, _nbc, border_by_class,
+            _jc,
+            _nc,
+            _bc,
+            jersey_by_class,
+            _nbc,
+            border_by_class,
             *_rest,
         ) = collect_stats(records)
 
@@ -115,9 +126,13 @@ class TestCollectStats:
     def test_empty_records(self) -> None:
         (
             jersey_counts,
-            _nc, _bc,
-            _jbc, _nbc, _bbc,
-            total_with, total_without,
+            _nc,
+            _bc,
+            _jbc,
+            _nbc,
+            _bbc,
+            total_with,
+            total_without,
             coverage_by_class,
         ) = collect_stats([])
 
@@ -139,7 +154,9 @@ class TestCollectStats:
             },
         ]
         (
-            _jc, _nc, border_counts,
+            _jc,
+            _nc,
+            border_counts,
             *_rest,
         ) = collect_stats(records)
 

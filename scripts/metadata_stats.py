@@ -129,9 +129,7 @@ def collect_stats(
             total_without += 1
             _cov_without[cls] += 1
 
-    all_classes = sorted(
-        set(_cov_with.keys()) | set(_cov_without.keys())
-    )
+    all_classes = sorted(set(_cov_with.keys()) | set(_cov_without.keys()))
     coverage_by_class: dict[str, tuple[int, int]] = {}
     for cls in all_classes:
         coverage_by_class[cls] = (
@@ -163,15 +161,16 @@ def plot_color_distribution(
 
     labels = [item[0] for item in sorted_items]
     values = [item[1] for item in sorted_items]
-    colors = [
-        COLOR_HEX.get(label, "#BDBDBD") for label in labels
-    ]
+    colors = [COLOR_HEX.get(label, "#BDBDBD") for label in labels]
 
     height = max(4, len(labels) * 0.5)
     fig, ax = plt.subplots(figsize=(10, height))
     bars = ax.barh(
-        labels, values, color=colors,
-        edgecolor="#444444", linewidth=0.5,
+        labels,
+        values,
+        color=colors,
+        edgecolor="#444444",
+        linewidth=0.5,
     )
     ax.set_xlabel("Count")
     ax.set_title(title)
@@ -188,9 +187,7 @@ def plot_color_distribution(
     logger.info(f"Saved {output_path}")
 
 
-def plot_border_distribution(
-    counts: Counter[bool], output_path: Path
-) -> None:
+def plot_border_distribution(counts: Counter[bool], output_path: Path) -> None:
     """Pie chart of border vs no-border proportions."""
     labels = []
     values = []
@@ -209,8 +206,11 @@ def plot_border_distribution(
 
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.pie(
-        values, labels=labels, colors=colors_list,
-        autopct="%1.1f%%", startangle=90,
+        values,
+        labels=labels,
+        colors=colors_list,
+        autopct="%1.1f%%",
+        startangle=90,
         textprops={"fontsize": 12},
     )
     ax.set_title("Border Distribution")
@@ -231,18 +231,14 @@ def plot_color_by_class_heatmap(
         return
 
     classes = sorted(by_class.keys())
-    all_colors = sorted(
-        {c for cnts in by_class.values() for c in cnts}
-    )
+    all_colors = sorted({c for cnts in by_class.values() for c in cnts})
 
     matrix = np.zeros((len(classes), len(all_colors)))
     for i, cls in enumerate(classes):
         row_total = sum(by_class[cls].values())
         for j, color in enumerate(all_colors):
             if row_total > 0:
-                matrix[i, j] = (
-                    by_class[cls][color] / row_total
-                )
+                matrix[i, j] = by_class[cls][color] / row_total
 
     w = max(8, len(all_colors) * 0.8)
     h = max(6, len(classes) * 0.4)
@@ -250,7 +246,10 @@ def plot_color_by_class_heatmap(
     im = ax.imshow(matrix, aspect="auto", cmap="YlOrRd")
     ax.set_xticks(range(len(all_colors)))
     ax.set_xticklabels(
-        all_colors, rotation=45, ha="right", fontsize=8,
+        all_colors,
+        rotation=45,
+        ha="right",
+        fontsize=8,
     )
     ax.set_yticks(range(len(classes)))
     ax.set_yticklabels(classes, fontsize=8)
@@ -265,9 +264,13 @@ def plot_color_by_class_heatmap(
             if val > 0:
                 tc = "white" if val > 0.5 else "black"
                 ax.text(
-                    j, i, f"{val:.2f}",
-                    ha="center", va="center",
-                    fontsize=6, color=tc,
+                    j,
+                    i,
+                    f"{val:.2f}",
+                    ha="center",
+                    va="center",
+                    fontsize=6,
+                    color=tc,
                 )
 
     plt.tight_layout()
@@ -276,9 +279,7 @@ def plot_color_by_class_heatmap(
     logger.info(f"Saved {output_path}")
 
 
-def plot_border_by_class(
-    by_class: dict[str, Counter[bool]], output_path: Path
-) -> None:
+def plot_border_by_class(by_class: dict[str, Counter[bool]], output_path: Path) -> None:
     """Stacked horizontal bar of border proportions per class."""
     if not by_class:
         logger.warning("No border-by-class data, skipping")
@@ -291,9 +292,7 @@ def plot_border_by_class(
         total = sum(by_class[cls].values())
         if total > 0:
             with_border.append(by_class[cls][True] / total)
-            without_border.append(
-                by_class[cls][False] / total
-            )
+            without_border.append(by_class[cls][False] / total)
         else:
             with_border.append(0)
             without_border.append(0)
@@ -302,12 +301,17 @@ def plot_border_by_class(
     fig, ax = plt.subplots(figsize=(10, h))
     y_pos = range(len(classes))
     ax.barh(
-        y_pos, with_border,
-        label="With Border", color="#1E88E5",
+        y_pos,
+        with_border,
+        label="With Border",
+        color="#1E88E5",
     )
     ax.barh(
-        y_pos, without_border, left=with_border,
-        label="No Border", color="#FB8C00",
+        y_pos,
+        without_border,
+        left=with_border,
+        label="No Border",
+        color="#FB8C00",
     )
     ax.set_yticks(y_pos)
     ax.set_yticklabels(classes, fontsize=8)
@@ -342,9 +346,7 @@ def plot_color_combinations(
     jersey_colors = sorted({k[0] for k in combo_counts})
     number_colors = sorted({k[1] for k in combo_counts})
 
-    matrix = np.zeros(
-        (len(jersey_colors), len(number_colors))
-    )
+    matrix = np.zeros((len(jersey_colors), len(number_colors)))
     for i, jc in enumerate(jersey_colors):
         for j, nc in enumerate(number_colors):
             matrix[i, j] = combo_counts.get((jc, nc), 0)
@@ -355,7 +357,10 @@ def plot_color_combinations(
     im = ax.imshow(matrix, aspect="auto", cmap="Blues")
     ax.set_xticks(range(len(number_colors)))
     ax.set_xticklabels(
-        number_colors, rotation=45, ha="right", fontsize=9,
+        number_colors,
+        rotation=45,
+        ha="right",
+        fontsize=9,
     )
     ax.set_yticks(range(len(jersey_colors)))
     ax.set_yticklabels(jersey_colors, fontsize=9)
@@ -371,9 +376,13 @@ def plot_color_combinations(
             if val > 0:
                 tc = "white" if val > max_val * 0.5 else "black"
                 ax.text(
-                    j, i, str(val),
-                    ha="center", va="center",
-                    fontsize=8, color=tc,
+                    j,
+                    i,
+                    str(val),
+                    ha="center",
+                    va="center",
+                    fontsize=8,
+                    color=tc,
                 )
 
     plt.tight_layout()
@@ -410,18 +419,27 @@ def plot_annotation_coverage(
     fig, ax = plt.subplots(figsize=(w, 5))
     colors = [_bar_color(p) for p in pct_covered]
     ax.bar(
-        range(len(classes)), pct_covered,
-        color=colors, edgecolor="#444444", linewidth=0.5,
+        range(len(classes)),
+        pct_covered,
+        color=colors,
+        edgecolor="#444444",
+        linewidth=0.5,
     )
     ax.set_xticks(range(len(classes)))
     ax.set_xticklabels(
-        classes, rotation=45, ha="right", fontsize=8,
+        classes,
+        rotation=45,
+        ha="right",
+        fontsize=8,
     )
     ax.set_ylabel("Coverage (%)")
     ax.set_title("Annotation Coverage by Class")
     ax.set_ylim(0, 105)
     ax.axhline(
-        y=100, color="#888888", linestyle="--", linewidth=0.5,
+        y=100,
+        color="#888888",
+        linestyle="--",
+        linewidth=0.5,
     )
 
     plt.tight_layout()
@@ -435,15 +453,20 @@ def main() -> None:
         description="Generate metadata statistics and plots"
     )
     parser.add_argument(
-        "--data-root", type=Path, required=True,
+        "--data-root",
+        type=Path,
+        required=True,
         help="Root directory of the dataset",
     )
     parser.add_argument(
-        "--split", type=str, default="train",
+        "--split",
+        type=str,
+        default="train",
         help="Dataset split to analyze (default: train)",
     )
     parser.add_argument(
-        "--output-dir", type=Path,
+        "--output-dir",
+        type=Path,
         default=Path("outputs/metadata_stats"),
         help="Directory to save plots",
     )
@@ -476,31 +499,35 @@ def main() -> None:
     total = total_with + total_without
     if total > 0:
         pct = total_with / total * 100
-        logger.info(
-            f"Metadata coverage: {total_with}/{total} "
-            f"({pct:.1f}%)"
-        )
+        logger.info(f"Metadata coverage: {total_with}/{total} ({pct:.1f}%)")
     else:
         logger.info("No records found")
 
     # Generate all plots
     jc_path = output_dir / "jersey_color_distribution.png"
     plot_color_distribution(
-        jersey_counts, "Jersey Color Distribution", jc_path,
+        jersey_counts,
+        "Jersey Color Distribution",
+        jc_path,
     )
     nc_path = output_dir / "number_color_distribution.png"
     plot_color_distribution(
-        number_counts, "Number Color Distribution", nc_path,
+        number_counts,
+        "Number Color Distribution",
+        nc_path,
     )
     plot_border_distribution(
-        border_counts, output_dir / "border_distribution.png",
+        border_counts,
+        output_dir / "border_distribution.png",
     )
     plot_color_by_class_heatmap(
-        jersey_by_class, "Jersey Color by Class",
+        jersey_by_class,
+        "Jersey Color by Class",
         output_dir / "jersey_color_by_class.png",
     )
     plot_color_by_class_heatmap(
-        number_by_class, "Number Color by Class",
+        number_by_class,
+        "Number Color by Class",
         output_dir / "number_color_by_class.png",
     )
     plot_border_by_class(
@@ -508,7 +535,8 @@ def main() -> None:
         output_dir / "border_by_class.png",
     )
     plot_color_combinations(
-        records, output_dir / "color_combinations.png",
+        records,
+        output_dir / "color_combinations.png",
     )
     plot_annotation_coverage(
         coverage_by_class,
