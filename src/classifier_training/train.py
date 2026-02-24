@@ -91,7 +91,7 @@ def main(cfg: DictConfig) -> None:
         **trainer_cfg,
         callbacks=callbacks,
         logger=loggers or False,
-        default_root_dir=HydraConfig.get().runtime.cwd,
+        default_root_dir=HydraConfig.get().runtime.output_dir,
     )
 
     # Train! ckpt_path="last" enables automatic resume from last checkpoint
