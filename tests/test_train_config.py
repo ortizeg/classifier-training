@@ -140,8 +140,8 @@ def test_checkpoint_resume_path_resolves_stably(hydra_cfg: DictConfig) -> None:
     assert "default_root_dir" in train_src, (
         "train.py must set default_root_dir for stable checkpoint resolution"
     )
-    assert "HydraConfig.get().runtime.output_dir" in train_src, (
-        "default_root_dir should use Hydra output dir for stable checkpoint resolution"
+    assert "HydraConfig.get().runtime.cwd" in train_src, (
+        "default_root_dir should use original cwd, not Hydra output dir"
     )
 
 
