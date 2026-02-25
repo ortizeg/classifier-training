@@ -7,7 +7,9 @@ Usage:
     pixi run train trainer.max_epochs=10        # override epochs
 """
 
+import shutil
 import sys
+from pathlib import Path
 from typing import Any
 
 import hydra
@@ -61,6 +63,12 @@ def main(cfg: DictConfig) -> None:
     class_weights = datamodule.get_class_weights()  # type: ignore[attr-defined]
     model.set_class_weights(class_weights)  # type: ignore[operator]
 
+    # Pass class mappings to VLM models for validation response parsing
+    if hasattr(model, "set_class_mappings"):
+        class_to_idx: dict[str, int] = datamodule.class_to_idx  # type: ignore[attr-defined]
+        idx_to_class = {v: k for k, v in class_to_idx.items()}
+        model.set_class_mappings(class_to_idx, idx_to_class)  # type: ignore[operator]
+
     # Instantiate loggers
     loggers: list[Any] = []
     if cfg.get("logging"):
@@ -78,18 +86,28 @@ def main(cfg: DictConfig) -> None:
                     continue
                 callbacks.append(hydra.utils.instantiate(v))
 
-    # Build Trainer from config dict (NOT via hydra.utils.instantiate --
-    # trainer config has no _target_ key)
+    # Use original CWD for checkpoints during training (local FS is reliable).
+    # GCS FUSE doesn't support PyTorch's temp-file-then-rename checkpoint pattern.
+    local_root = HydraConfig.get().runtime.cwd
     trainer_cfg = dict(cfg.trainer)
     trainer = L.Trainer(
         **trainer_cfg,
         callbacks=callbacks,
         logger=loggers or False,
-        default_root_dir=HydraConfig.get().runtime.cwd,
+        default_root_dir=local_root,
     )
 
     # Train! ckpt_path="last" enables automatic resume from last checkpoint
     trainer.fit(model, datamodule=datamodule, ckpt_path="last")
+
+    # Copy checkpoints to Hydra output dir (may be a GCS FUSE mount on Vertex AI).
+    output_dir = Path(HydraConfig.get().runtime.output_dir)
+    ckpt_src = Path(local_root) / "checkpoints"
+    if ckpt_src.is_dir() and output_dir != Path(local_root):
+        ckpt_dst = output_dir / "checkpoints"
+        logger.info(f"Copying checkpoints from {ckpt_src} to {ckpt_dst}")
+        shutil.copytree(ckpt_src, ckpt_dst, dirs_exist_ok=True)
+        logger.info(f"Checkpoint copy complete: {list(ckpt_dst.glob('*.ckpt'))}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,14 @@
+# Trainer config for SmolVLM2 LoRA fine-tuning on L4 GPU
+max_epochs: 15
+accelerator: gpu
+devices: 1
+precision: bf16-mixed
+accumulate_grad_batches: 2
+gradient_clip_val: 1.0
+gradient_clip_algorithm: norm
+log_every_n_steps: 10
+val_check_interval: 0.5
+enable_checkpointing: true
+enable_progress_bar: true
+enable_model_summary: true
+num_sanity_val_steps: 1

@@ -163,55 +163,43 @@ class TestImageFolderDataModuleRealDataset:
         cfg = DataModuleConfig(data_root=str(REAL_DATASET), num_workers=0)
         return ImageFolderDataModule(cfg)
 
-    def test_class_to_idx_has_43_classes(self) -> None:
-        """Phase 1 success criterion 5: all 43 classes present."""
+    def test_class_to_idx_has_42_classes(self) -> None:
+        """All 42 digit classes present (empty-string removed after dedup)."""
         dm = self._make_dm()
-        assert dm.num_classes == 43, (
-            f"Expected 43 classes, got {dm.num_classes}. "
-            "Check that '' (empty string) is included."
-        )
+        assert dm.num_classes == 42, f"Expected 42 classes, got {dm.num_classes}."
 
-    def test_empty_string_class_at_index_zero(self) -> None:
-        """'' class must sort first (index 0) — alphabetical sort invariant."""
-        dm = self._make_dm()
-        assert dm.class_to_idx[""] == 0, (
-            "Empty-string class must be at index 0 (sorts before all numeric strings)"
-        )
-
-    def test_train_dataset_len_equals_annotation_rows(self) -> None:
-        """len(train_dataset) must be 2930 (annotation rows), not 2891 (images)."""
+    def test_train_dataset_len_at_least_real_rows(self) -> None:
+        """Train dataset has >= 2891 real rows (may include synthetic)."""
         dm = self._make_dm()
         dm.setup("fit")
         assert dm._train_dataset is not None
-        assert len(dm._train_dataset) == 2930, (
-            f"Expected 2930 annotation rows, got {len(dm._train_dataset)}. "
-            "Do not deduplicate by image filename."
+        assert len(dm._train_dataset) >= 2891, (
+            f"Expected >= 2891 rows, got {len(dm._train_dataset)}."
         )
 
     def test_val_dataset_len_equals_annotation_rows(self) -> None:
         dm = self._make_dm()
         dm.setup("fit")
         assert dm._val_dataset is not None
-        assert len(dm._val_dataset) == 372
+        assert len(dm._val_dataset) == 364
 
     def test_test_dataset_len_equals_annotation_rows(self) -> None:
         dm = self._make_dm()
         dm.setup("test")
         assert dm._test_dataset is not None
-        assert len(dm._test_dataset) == 365
+        assert len(dm._test_dataset) == 360
 
-    def test_save_labels_mapping_43_classes(self, tmp_path: Path) -> None:
-        """Phase 1 success criterion 5: labels_mapping.json has 43 classes."""
+    def test_save_labels_mapping_42_classes(self, tmp_path: Path) -> None:
+        """labels_mapping.json has 42 classes (empty-string removed after dedup)."""
         dm = self._make_dm()
         out = tmp_path / "labels_mapping.json"
         dm.save_labels_mapping(out)
         assert out.exists()
         with open(out) as f:
             data = json.load(f)
-        assert data["num_classes"] == 43
-        assert len(data["class_to_idx"]) == 43
-        assert len(data["idx_to_class"]) == 43
-        assert data["class_to_idx"][""] == 0
+        assert data["num_classes"] == 42
+        assert len(data["class_to_idx"]) == 42
+        assert len(data["idx_to_class"]) == 42
 
     def test_train_dataloader_batch_shape(self) -> None:
         """Train batch must be ClassificationBatch dict with (B, 3, 224, 224) float32."""
@@ -239,5 +227,5 @@ class TestImageFolderDataModuleRealDataset:
         dm = self._make_dm()
         dm.setup("fit")
         weights = dm.get_class_weights()
-        assert weights.shape == (43,)
+        assert weights.shape == (42,)
         assert (weights > 0).all()

@@ -1,0 +1,7 @@
+# VLM DataModule for SmolVLM2 fine-tuning
+_target_: classifier_training.data.vlm_datamodule.VLMDataModule
+data_root: /gcs/data
+model_name: HuggingFaceTB/SmolVLM2-2.2B-Instruct
+batch_size: 12
+num_workers: 4
+max_length: 384

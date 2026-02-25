@@ -1,7 +1,7 @@
 # Hydra config for ResNet50ClassificationModel
 # ResNet50 is a larger model; slightly lower default LR appropriate for fine-tuning.
 _target_: classifier_training.models.resnet.ResNet50ClassificationModel
-num_classes: 43
+num_classes: 42
 pretrained: true
 learning_rate: 5.0e-5
 weight_decay: 1.0e-4

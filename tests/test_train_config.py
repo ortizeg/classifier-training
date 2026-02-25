@@ -71,7 +71,7 @@ def test_trainer_config_values(hydra_cfg: DictConfig) -> None:
     assert hydra_cfg.trainer.precision == "16-mixed"  # TRAIN-02
     assert hydra_cfg.trainer.gradient_clip_val == 1.0  # TRAIN-03
     assert hydra_cfg.trainer.accumulate_grad_batches == 1  # TRAIN-03
-    assert hydra_cfg.trainer.max_epochs == 100
+    assert hydra_cfg.trainer.max_epochs == 200
     assert hydra_cfg.trainer.accelerator == "auto"
 
 

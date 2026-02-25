@@ -7,7 +7,10 @@ channels = ["conda-forge"]
 platforms = ["osx-arm64", "linux-64"]
 
 [system-requirements]
-cuda = "12.1"
+cuda = "12.9"
+
+[target.linux-64.dependencies]
+cuda-version = "12.*"
 
 [tasks]
 test = "pytest"
@@ -21,6 +24,7 @@ train-local = "python -m classifier_training.train --config-name=train_jersey_oc
 precommit = "pre-commit run --all-files"
 build = { cmd = "bash scripts/cloud-build.sh" }
 build-local = { cmd = "bash scripts/build-docker.sh --local" }
+generate-synthetic = "python scripts/generate_synthetic.py --config configs/synthetic_default.yaml"
 
 [dependencies]
 python = "3.11.*"
@@ -39,6 +43,8 @@ onnxscript = ">=0.5.6,<0.6"
 pandas = "*"
 psutil = ">=7.2.2,<8"
 tqdm = ">=4.67.3,<5"
+transformers = ">=5.2.0,<6"
+num2words = ">=0.5.14,<0.6"
 
 [feature.dev.dependencies]
 pytest = "*"
@@ -55,3 +61,15 @@ prod = []
 classifier-training = { path = ".", editable = true }
 onnxruntime = ">=1.23.2, <2"
 wandb = ">=0.19,<1.0"
+orjson = ">=3.10,<4"
+peft = ">=0.14,<1"
+
+[target.linux-64.activation.env]
+# Ensure NVIDIA driver libs (injected at runtime by NVIDIA Container Runtime)
+# are on LD_LIBRARY_PATH even after conda activation scripts run.
+# pixi's activation.env has higher priority than outside env vars (Docker ENV),
+# so we must set the full path here.
+LD_LIBRARY_PATH = "/usr/local/nvidia/lib64:/usr/local/cuda/lib64:/usr/local/cuda/compat:$CONDA_PREFIX/lib"
+
+[target.linux-64.pypi-dependencies]
+bitsandbytes = ">=0.45,<1"

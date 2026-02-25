@@ -323,9 +323,7 @@ class TestRandomZoomOut:
         assert list(r1.tobytes()) == list(r2.tobytes())
 
     def test_custom_fill_color(self, rgb_image: Image.Image) -> None:
-        t = RandomZoomOut(
-            min_scale=1.5, max_scale=1.5, fill_color=(0, 0, 0), p=1.0
-        )
+        t = RandomZoomOut(min_scale=1.5, max_scale=1.5, fill_color=(0, 0, 0), p=1.0)
         result = t(rgb_image)
         assert isinstance(result, Image.Image)
 

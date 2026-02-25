@@ -1,0 +1,44 @@
+# Targeted synthetic generation for specific color combos missing from training.
+#
+# These combos were identified as absent in Phase 12 metadata analysis:
+# - Red/orange numbers on white jerseys (classes 18, 4)
+# - Red numbers on blue jerseys (classes 22, 30)
+# - Orange numbers generally (zero in entire training set)
+#
+# Usage:
+#   python scripts/generate_synthetic_targeted.py --config configs/synthetic_targeted.yaml --dry-run
+#   python scripts/generate_synthetic_targeted.py --config configs/synthetic_targeted.yaml
+
+data_root: /Users/ortizeg/1Projects/⛹️‍♂️ Next Play/data/basketball-jersey-numbers-ocr
+output_dir: ${data_root}/train/synthetic_targeted
+image_size: 96
+font_dir: fonts/
+seed: 137
+
+targets:
+  # Class 18: fails on white jersey + red/orange number
+  # Real data: 12 samples (10 black, 2 white jerseys; 0 red/orange numbers)
+  - label: "18"
+    combos:
+      - { jersey_color: white, number_color: red, count: 150 }
+
+  # Class 22: fails on blue jersey + red number
+  # Real data: 78 samples but 0 blue+red combos (blue jerseys have white numbers)
+  - label: "22"
+    combos:
+      - { jersey_color: blue, number_color: red, count: 150 }
+
+  # Class 30: fails on blue jersey + red number
+  # Real data: 54 samples but 0 blue jerseys at all
+  - label: "30"
+    combos:
+      - { jersey_color: blue, number_color: red, count: 150 }
+
+  # Class 4: fails on white jersey + orange number
+  # Orange numbers have ZERO samples in entire 8,088 training set
+  # Generate on multiple backgrounds to teach model orange text generally
+  - label: "4"
+    combos:
+      - { jersey_color: white, number_color: orange, count: 150 }
+      - { jersey_color: black, number_color: orange, count: 100 }
+      - { jersey_color: navy, number_color: orange, count: 100 }

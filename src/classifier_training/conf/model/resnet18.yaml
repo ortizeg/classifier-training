@@ -2,7 +2,7 @@
 # Consumed by hydra.utils.instantiate(cfg.model) in the training script.
 # Flat keys only — no nested wrapper (avoids double-nesting in ConfigStore).
 _target_: classifier_training.models.resnet.ResNet18ClassificationModel
-num_classes: 43
+num_classes: 42
 pretrained: true
 learning_rate: 5.0e-4
 weight_decay: 1.0e-4
