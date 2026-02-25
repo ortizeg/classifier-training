@@ -19,27 +19,36 @@ class SyntheticWriter:
     def __init__(self, output_dir: Path) -> None:
         self.output_dir = output_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self._records: list[dict[str, str]] = []
+        self._records: list[dict[str, object]] = []
 
-    def write_image(self, img: Image.Image, label: str, index: int) -> None:
+    def write_image(
+        self,
+        img: Image.Image,
+        label: str,
+        index: int,
+        metadata: dict[str, object] | None = None,
+    ) -> None:
         """Save a synthetic image and record its annotation.
 
         Args:
             img: PIL Image to save.
             label: Class label string (e.g. "6", "46").
             index: Sample index within this label (for filename uniqueness).
+            metadata: Optional metadata dict (jersey_color, number_color, etc.)
+                to attach to the JSONL record.
         """
         # Zero-pad label for filename sorting (e.g. "6" -> "006")
         label_padded = label.zfill(3) if label else "empty"
         fname = f"synth_{label_padded}_{index:05d}.jpg"
         img.save(self.output_dir / fname, quality=95)
-        self._records.append(
-            {
-                "image": fname,
-                "prefix": "Read the number.",
-                "suffix": label,
-            }
-        )
+        record: dict[str, object] = {
+            "image": fname,
+            "prefix": "Read the number.",
+            "suffix": label,
+        }
+        if metadata is not None:
+            record["metadata"] = metadata
+        self._records.append(record)
 
     def flush(self) -> Path:
         """Write annotations.jsonl and return its path.

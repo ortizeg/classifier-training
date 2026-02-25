@@ -155,8 +155,8 @@ def main() -> None:
 
     for cls, _real, num_synth in generation_plan:
         for i in range(num_synth):
-            img = renderer.render(cls)
-            writer.write_image(img, cls, i)
+            img, metadata = renderer.render(cls)
+            writer.write_image(img, cls, i, metadata=metadata)
 
     ann_path = writer.flush()
     logger.info(f"Done! Generated {writer.num_written} images in {output_dir}")
