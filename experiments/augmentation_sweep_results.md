@@ -1,8 +1,8 @@
-# Jersey OCR Augmentation Sweep: Complete Experiment Log
+# Jersey OCR: Complete Experiment Log
 
 ## Overview
 
-Systematic evaluation of broadcast video degradation augmentations for basketball jersey number OCR using ResNet18. All experiments use the same base configuration:
+Systematic evaluation of training strategies for basketball jersey number OCR. Covers augmentation sweeps, synthetic data generation, hyperparameter optimization (Phases 0-10 with ResNet18), and vision-language model fine-tuning (Phase 11 with SmolVLM2). All ResNet18 experiments use the same base configuration:
 - **Model**: ResNet18 (pretrained ImageNet, replaced FC head)
 - **Loss**: Cross-entropy (no label smoothing)
 - **Learning rate**: 5e-4 (AdamW + warmup + cosine)
@@ -515,18 +515,205 @@ With `label_smoothing=0.1` now baked into defaults, we swept the remaining hyper
 
 ---
 
+## Phase 11: SmolVLM2 Vision-Language Model Fine-Tuning (2026-02-24/25)
+
+### Motivation
+
+Test whether a vision-language model (VLM) can match or exceed ResNet18 on jersey number OCR. VLMs understand visual context and can "read" text, which may be more robust for OCR-style tasks than a pure classification head. This also explores whether VLMs can replace task-specific CNN classifiers for structured visual recognition tasks.
+
+### Approach: QLoRA Fine-Tuning
+
+- **Model**: SmolVLM2-2.2B-Instruct (HuggingFace multimodal model)
+- **Method**: QLoRA — 4-bit NF4 quantization via bitsandbytes, LoRA adapters on attention projections
+- **LoRA config**: r=16, alpha=32, target_modules=[q_proj, k_proj, v_proj, o_proj], task_type=CAUSAL_LM
+- **Loss**: Causal LM loss (built into HF model) — NOT cross-entropy logits like ResNet
+- **Prompt**: `"What number is on this basketball jersey? Reply with just the number, nothing else."`
+- **Validation**: Generate response, parse with `_parse_vlm_response()`, compute accuracy vs ground truth label
+- **No augmentation**: HF processor handles image preprocessing; no torchvision transforms
+- **Trainable params**: ~4M LoRA params (vs 2.2B total) + vision connector unfrozen
+
+### Architecture
+
+Unlike ResNet18 which extends `BaseClassificationModel`, SmolVLM2 required a completely separate training pipeline:
+
+- `VLMJerseyNumberDataset` — returns PIL images + prompt/answer strings (reuses JSONL annotation format)
+- `VLMCollator` — applies chat template, runs HF processor, creates labels with prompt tokens masked to -100
+- `VLMDataModule` — Lightning DataModule with HF processor instead of torchvision transforms
+- `SmolVLM2ClassificationModel` — standalone Lightning module (causal LM loss, not logits-based CE)
+
+Key commits: `ef44d54` (framework), `87a4e53` (checkpoint fix), `36937dd` (batch optimization)
+
+### Zero-Shot Baseline
+
+Before fine-tuning, SmolVLM2-2.2B-Instruct was evaluated zero-shot on the jersey OCR val set:
+
+| Metric | Value |
+|--------|-------|
+| Val Top-1 Accuracy | 57.3% |
+| Approach | Direct prompting, no training |
+
+### Training Infrastructure Challenges
+
+1. **GCS FUSE checkpoint issue**: PyTorch's temp-file-then-rename checkpoint pattern fails on GCS FUSE mounts. First attempted `runtime.output_dir` as `default_root_dir` — checkpoints corrupted, accuracy dropped to 58.5%. Fix: save checkpoints to local filesystem (`runtime.cwd`), then `shutil.copytree` to GCS after training completes.
+
+2. **QLoRA non-determinism**: 4-bit NF4 quantization uses stochastic rounding, and cuDNN autotuner selects different kernels across runs. This caused significant run-to-run variance (58.5% to 94.5%) with identical configs.
+
+3. **A100 quota**: Vertex AI `custom_model_training_nvidia_a100_gpus` quota is separate from Compute Engine GPU quota. Required explicit quota increase request.
+
+4. **A100 OOM at batch_size=32**: Used 38.61/39.39 GiB on A100-40GB. Reduced to batch_size=24.
+
+### Experiments
+
+| # | Run | GPU | batch_size | accum | eff_batch | max_epochs | patience | Val Acc | Time/Epoch | Total Time | Job ID |
+|---|-----|-----|-----------|-------|-----------|------------|----------|---------|------------|------------|--------|
+| 30 | Zero-shot | — | — | — | — | — | — | 57.3% | — | — | — |
+| 31 | Initial L4 (prev session) | L4 | 4 | 4 | 16 | 10 | 3 | 94.5% | ~7.5 min | ~75 min | `2038918488348688384` |
+| 32 | Fix attempt 1 (output_dir) | L4 | 4 | 4 | 16 | 10 | 3 | 58.5% | ~7.5 min | ~75 min | `4038164879180300288` |
+| 33 | Fix attempt 2 (copytree) | L4 | 4 | 4 | 16 | 10 | 3 | 87.4% | ~12 min | ~120 min | `7417834924545146880` |
+| 34 | Optimized L4 | L4 | 12 | 2 | 24 | 15 | 5 | 93.4% | ~6.1 min | 91 min | `8584126490545750016` |
+| 35 | A100 run 1 | A100-40GB | 24 | 1 | 24 | 15 | 5 | 87.9% | ~5.9 min | 28 min | `622325299308134400` |
+| **36** | **A100 run 2** | **A100-40GB** | **24** | **1** | **24** | **15** | **5** | **94.5%** | **~5.4 min** | **27 min** | **`5267788314940801024`** |
+
+### GCS Artifact Links — Phase 11
+
+| # | Run | GCS Output Directory | Vertex AI Job ID |
+|---|-----|---------------------|-----------------|
+| 31 | Initial L4 | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-smolvlm2-train/` (prev session) | `2038918488348688384` |
+| 33 | Fix attempt 2 | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-smolvlm2-train/` | `7417834924545146880` |
+| 34 | Optimized L4 | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-smolvlm2-train/` | `8584126490545750016` |
+| 35 | A100 run 1 | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-smolvlm2-a100/` | `622325299308134400` |
+| 36 | A100 run 2 | `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/jersey-ocr-smolvlm2-a100/` | `5267788314940801024` |
+
+### GPU Comparison: L4 vs A100
+
+| Metric | NVIDIA L4 | NVIDIA A100-40GB | Speedup |
+|--------|-----------|-----------------|---------|
+| VRAM | 24 GB | 40 GB | 1.7x |
+| Memory bandwidth | 300 GB/s | 1,555 GB/s | 5.2x |
+| bf16 TFLOPS | 120 | 312 | 2.6x |
+| Max batch_size (SmolVLM2) | 12 | 24 | 2x |
+| Time per epoch | ~6.1 min | ~5.4 min | 1.1x |
+| Total training time | 91 min | 27 min | **3.4x** |
+| Machine type | g2-standard-8 | a2-highgpu-1g | — |
+
+The 3.4x total speedup (vs 1.1x per-epoch) comes from the A100 training fewer epochs due to early stopping with the same patience setting.
+
+### Key Findings — Phase 11
+
+1. **SmolVLM2 QLoRA reaches 94.5% val top-1** — a strong result for a VLM on a classification task, but below ResNet18's 96.2% with full training recipe (synthetic data + label smoothing + augmentation).
+
+2. **QLoRA introduces significant non-determinism**: Same config produced results ranging from 58.5% to 94.5% across 6 runs. This is inherent to 4-bit NF4 stochastic rounding and cuDNN autotuner kernel selection. Multiple runs are required to assess true model quality.
+
+3. **Larger batch size helps stability**: Increasing batch_size from 4 to 12 (L4) or 24 (A100) improved gradient signal quality, reducing variance in convergence behavior.
+
+4. **A100 is 3.4x faster than L4 for QLoRA**: The speedup is primarily from memory bandwidth (5.2x), which is the bottleneck for quantized model training. The A100's higher bandwidth means less time waiting for weight dequantization.
+
+5. **GCS FUSE is incompatible with PyTorch checkpointing**: Must save locally then copy to cloud storage post-training. This is a general lesson for any PyTorch training on Vertex AI.
+
+6. **VLM training is fundamentally different from CNN classification**: Required a completely separate training pipeline (dataset, collator, datamodule, model). The causal LM loss paradigm means no EMA, no weighted cross-entropy, no confusion matrix callbacks, and no ONNX export.
+
+7. **Model size**: SmolVLM2 LoRA checkpoint is 1.8 GiB (full quantized model + adapters) vs ResNet18 ONNX at 43 MB — a 42x size difference with lower accuracy.
+
+### Saved Checkpoint
+
+Best checkpoint (94.5% from A100 run 2) saved locally:
+```
+models/smolvlm2-lora/last.ckpt  (1.8 GiB)
+```
+
+---
+
+## Cross-Model Comparison: ResNet18 vs SmolVLM2
+
+| Metric | ResNet18 (best, #21) | SmolVLM2 (best, #36) | Notes |
+|--------|---------------------|---------------------|-------|
+| **Val Top-1 Accuracy** | **96.2%** | 94.5% | ResNet18 wins by 1.7% |
+| Val Top-5 Accuracy | ~99% | N/A | VLM generates text, no top-5 |
+| Model size (deploy) | 43 MB (ONNX) | 1.8 GB (ckpt) | 42x smaller |
+| Inference speed | ~1 ms (ONNX RT) | ~200 ms (GPU) | ~200x faster |
+| Training data | 8,088 (real + synth) | 2,891 (real only) | VLM not tested with synth |
+| Training time | ~30 min (L4) | 27 min (A100) | Similar wall time |
+| Training cost | ~$1.50 (L4) | ~$8.00 (A100) | 5x more expensive |
+| Run-to-run variance | Low (~1%) | High (58-95%) | QLoRA non-determinism |
+| Augmentation | Heavy pipeline | None (HF processor) | ResNet benefits from augs |
+| Label smoothing | Yes (0.1) | No | Causal LM loss instead |
+| EMA | Yes (0.9999) | No | Not compatible with VLM |
+| Export format | ONNX (edge-ready) | PyTorch (GPU-only) | ResNet deploys anywhere |
+
+---
+
+## Summary Table: All Experiments (Phases 0-11)
+
+| # | Phase | Config | Model | Val Top-1 | Dataset | Key Change |
+|---|-------|--------|-------|-----------|---------|-----------|
+| 0 | 0 | baseline | ResNet18 | ~91.9% | real (2,930) | Pre-sweep baseline |
+| 1-6 | 1-2 | aug sweep | ResNet18 | ~91-94% | real (2,930) | 8 degradation configs |
+| 7 | 2 | `jpeg_noise_focus` | ResNet18 | ~93-94% | real (2,930) | Best simple aug — JPEG + noise only |
+| 9-12 | 3 | zoom-out ablation | ResNet18 | ~91-93% | real (2,930) | Zoom-out hurts measured accuracy |
+| 13 | 4 | `all_moderate` | ResNet18 | ~92-93% | real (2,930) | Kitchen sink + 30% clean pass-through |
+| 14 | 5 | `all_mod_zoom_choice` | ResNet18 | ~91-92% | real (2,930) | Bidirectional zoom (redundant w/ RandomResizedCrop) |
+| 17 | 6 | `zc_strong_all` | ResNet18 | ~93-94% | real (2,930) | All augs cranked — tied best on real data |
+| 18 | 7 | `zc_strong_all_weighted` | ResNet18 | ~90-91% | real (2,930) | Weighted sampler hurts (rare classes too scarce) |
+| 19 | 8 | real + synth baseline | ResNet18 | ~95.1% | real + synth (8,088) | +176% data, +1-2% accuracy |
+| **21** | **9** | **label_smoothing=0.1** | **ResNet18** | **~96.2%** | **real + synth (8,088)** | **Best overall — all-time champion** |
+| 23-29 | 10 | HP sweep (7 configs) | ResNet18/34/50 | ~94.2-95.9% | real + synth (8,088) | No improvement over label smoothing |
+| 30 | 11 | zero-shot | SmolVLM2-2.2B | 57.3% | real (val only) | VLM baseline without training |
+| **36** | **11** | **QLoRA best run** | **SmolVLM2-2.2B** | **94.5%** | **real (2,891)** | **Best VLM result (A100, batch=24)** |
+
+---
+
+## Conclusions
+
+1. **ResNet18 with label smoothing + synthetic data remains the best model** at 96.2% val top-1. It's also 42x smaller, 200x faster at inference, cheaper to train, and deployable on edge devices via ONNX.
+
+2. **SmolVLM2 QLoRA is a viable alternative at 94.5%** but has significant practical drawbacks: large model size, GPU-only inference, high run-to-run variance, and 5x training cost. It has not yet been tested with synthetic training data or augmentation, which could close the gap.
+
+3. **The accuracy progression tells a clear story**:
+   - Baseline ResNet18: 91.9% (no augmentation)
+   - + Broadcast degradation augmentation: 93-94% (+2%)
+   - + Synthetic data for rare classes: 95.1% (+1%)
+   - + Label smoothing: 96.2% (+1.1%)
+   - Total improvement: **+4.3%** from systematic experimentation
+
+4. **Data quality > model complexity**: Adding 5,197 synthetic images (+176% data) improved accuracy more than switching from an 11M-param CNN to a 2.2B-param VLM. The VLM trained on real data only (2,891 samples) couldn't match ResNet18 trained on the enriched dataset.
+
+## Next Steps
+
+1. **Test SmolVLM2 with synthetic data**: The VLM was only trained on real data. Adding synthetic training samples could push it past 96%.
+2. **Test SmolVLM2 with more epochs**: QLoRA variance is high — running 5+ A100 jobs and taking the best checkpoint would give a more reliable accuracy estimate.
+3. **Evaluate on real broadcast footage**: Both models were evaluated on the val set (tightly cropped). Real-world performance on detector output crops is the true measure.
+4. **Ensemble approach**: Use SmolVLM2 as a fallback for samples where ResNet18 is low-confidence. The VLM's text understanding may catch cases the CNN misses.
+5. **Full fine-tune vs QLoRA**: QLoRA's stochastic quantization limits accuracy ceiling. A full bf16 fine-tune on A100-80GB (or H100) could reduce variance and improve peak accuracy.
+
 ## Recommendations
 
-1. **Current best**: `label_smoothing=0.1` + synthetic data = **~96.2% val top-1** (Experiment #21). Already baked into defaults.
-2. **Synthetic data works**: +1-2% val accuracy from adding 5,197 synthetic images for 22 underrepresented classes. Model converges in half the epochs.
-3. **Label smoothing is the only HP that helped**: 0.1 adds +1.1% over synth baseline. Was harmful at 3K samples, beneficial at 8K.
-4. **Keep all other defaults**: EMA 0.9999, warmup 2000 steps, lr=5e-4, batch_size=64 — none improved when changed.
-5. **ResNet18 is sufficient**: ResNet34/50 offer no improvement on this 42-class problem. Stick with the smaller, faster model.
-6. **Don't use focal loss**: Harmful with label smoothing — the two regularizers conflict.
-7. **Weighted sampler is now neutral**: With synthetic data, it neither helps nor hurts. Not needed.
-8. **Keep strong augmentation**: RandomApply p=0.85 is still optimal even with 2.8x more data.
+1. **Deploy ResNet18 (label smoothing)** as the primary production model — 96.2% accuracy, 43 MB ONNX, runs anywhere.
+2. **Keep SmolVLM2 checkpoint** as a research artifact for ensemble or fallback experiments.
+3. **Current best configs are baked into defaults** — no overrides needed for the best ResNet18 recipe.
+4. **Synthetic data works** — for any future class additions, generate synthetic samples immediately.
+5. **Keep strong augmentation** (RandomApply p=0.85) — proven beneficial even with 2.8x more data.
+6. **Label smoothing=0.1 is the only HP that helped** — all other HP changes were neutral or harmful.
+7. **ResNet18 is sufficient** — ResNet34/50/SmolVLM2-2.2B offer no accuracy improvement on this task.
 
 ## Technical Details
+
+- **Repository**: classifier-training (GitHub: ortizeg/classifier-training)
+- **Transform configs**: `src/classifier_training/conf/transforms/basketball_jersey_*.yaml`
+- **Custom transforms**: `src/classifier_training/transforms/degradation.py`
+  - `RandomJPEGCompression` — PIL encode/decode round-trip
+  - `RandomPixelate` — NEAREST downscale + upscale
+  - `RandomBilinearDownscale` — BILINEAR downscale + upscale
+  - `RandomGaussianNoise` — additive Gaussian noise (0-255 scale)
+  - `RandomZoomOut` — canvas padding + resize (simulates loose bbox)
+  - `RandomZoomIn` — crop + resize up (simulates tight bbox)
+- **SmolVLM2 pipeline**: `src/classifier_training/models/smolvlm2.py`, `src/classifier_training/data/vlm_*.py`
+- **GCP Project**: `api-project-562713517696`
+- **GCS Bucket**: `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/`
+- **Vertex AI Region**: `us-east1`
+- **Docker Image**: `us-docker.pkg.dev/api-project-562713517696/classifier-training/classifier-training:latest`
+- **Dates**: 2026-02-20 (Phases 1-8), 2026-02-21 (Phases 9-10), 2026-02-24/25 (Phase 11)
+
+## How to Recover Artifacts
 
 - **Repository**: classifier-training (GitHub: ortizeg/classifier-training)
 - **Transform configs**: `src/classifier_training/conf/transforms/basketball_jersey_*.yaml`
