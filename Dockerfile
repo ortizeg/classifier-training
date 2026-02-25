@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
+FROM nvidia/cuda:12.9.0-cudnn-runtime-ubuntu22.04
 
 LABEL org.opencontainers.image.source="https://github.com/ortizeg/classifier-training"
 LABEL org.opencontainers.image.license="Apache-2.0"
@@ -17,7 +17,7 @@ ENV PATH="/root/.pixi/bin:$PATH"
 
 # Override CUDA version for pixi to allow installation of cuda-dependent packages
 # even if the build environment doesn't have a GPU attached.
-ENV CONDA_OVERRIDE_CUDA=12.1
+ENV CONDA_OVERRIDE_CUDA=12.9
 
 COPY pixi.toml pixi.lock* pyproject.toml ./
 
@@ -25,8 +25,8 @@ COPY pixi.toml pixi.lock* pyproject.toml ./
 # without invalidating the cache when source code changes.
 RUN mkdir -p src/classifier_training && touch src/classifier_training/__init__.py
 
-# Install dependencies (only production environment)
-RUN pixi install --environment prod
+# Install both default (training) and prod (annotation/VLM) environments
+RUN pixi install --environment default && pixi install --environment prod
 
 # Copy source code
 COPY . .
