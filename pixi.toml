@@ -64,5 +64,12 @@ wandb = ">=0.19,<1.0"
 orjson = ">=3.10,<4"
 peft = ">=0.14,<1"
 
+[target.linux-64.activation.env]
+# Ensure NVIDIA driver libs (injected at runtime by NVIDIA Container Runtime)
+# are on LD_LIBRARY_PATH even after conda activation scripts run.
+# pixi's activation.env has higher priority than outside env vars (Docker ENV),
+# so we must set the full path here.
+LD_LIBRARY_PATH = "/usr/local/nvidia/lib64:/usr/local/cuda/lib64:/usr/local/cuda/compat:$CONDA_PREFIX/lib"
+
 [target.linux-64.pypi-dependencies]
 bitsandbytes = ">=0.45,<1"

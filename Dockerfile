@@ -31,13 +31,12 @@ RUN pixi install --environment default && pixi install --environment prod
 # Copy source code
 COPY . .
 
-# Ensure NVIDIA driver libraries (injected at container runtime by
-# NVIDIA Container Runtime) are visible to pixi's conda environment.
-# Without this, pixi's LD_LIBRARY_PATH may shadow the driver paths
-# and torch.cuda.is_available() returns False.
+# NVIDIA Container Runtime needs these to inject GPU driver at runtime.
+# NOTE: LD_LIBRARY_PATH for GPU detection is set in pixi.toml's
+# [target.linux-64.activation.env] because pixi's conda activation
+# scripts overwrite Docker ENV LD_LIBRARY_PATH values.
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV LD_LIBRARY_PATH=/usr/local/nvidia/lib64:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
 
 # Runtime secrets (WANDB_API_KEY, etc.) should be injected via
 # environment variables at container run time, NOT baked into the image.
