@@ -662,6 +662,115 @@ models/smolvlm2-lora/last.ckpt  (1.8 GiB)
 
 ---
 
+## Phase 12: Dataset Metadata Analysis (2026-02-25)
+
+### Motivation
+
+Annotated all dataset splits (train, valid, test) with visual metadata using SmolVLM2-2.2B-Instruct to understand jersey color distribution, number color distribution, and whether numbers have borders/outlines. This helps identify distribution gaps between real and synthetic data, and between train/valid/test splits.
+
+### Annotation Method
+
+- **Model**: SmolVLM2-2.2B-Instruct (single-prompt JSON mode)
+- **Infrastructure**: NVIDIA L4 on Vertex AI (g2-standard-8), batch_size=8
+- **Fields**: `jersey_color`, `number_color`, `border` (true/false)
+- **Valid colors**: white, black, red, blue, navy, yellow, green, purple, orange, grey, maroon, teal, pink
+
+### Annotation Coverage
+
+| Split | Records | With Metadata | Coverage |
+|-------|---------|---------------|----------|
+| Train (real) | 2,891 | 2,891 | 100% |
+| Train (synthetic) | 5,197 | 5,197 | 100% |
+| Valid | 372 | 372 | 100% |
+| Test | 365 | 365 | 100% |
+
+### Jersey Color Distribution
+
+| Color | Train Real | Train Synth | Train Combined | Valid | Test |
+|-------|-----------|-------------|----------------|-------|------|
+| white | 1,539 (53.2%) | 679 (13.1%) | 2,218 (27.4%) | 202 (54.3%) | 193 (52.9%) |
+| blue | 428 (14.8%) | 923 (17.8%) | 1,351 (16.7%) | 49 (13.2%) | 55 (15.1%) |
+| red | 281 (9.7%) | 1,004 (19.3%) | 1,285 (15.9%) | 38 (10.2%) | 35 (9.6%) |
+| black | 334 (11.6%) | 622 (12.0%) | 956 (11.8%) | 34 (9.1%) | 34 (9.3%) |
+| yellow | 255 (8.8%) | 649 (12.5%) | 904 (11.2%) | 39 (10.5%) | 43 (11.8%) |
+| green | 15 (0.5%) | 485 (9.3%) | 500 (6.2%) | 3 (0.8%) | 0 |
+| orange | 0 | 480 (9.2%) | 480 (5.9%) | 0 | 0 |
+| navy | 25 (0.9%) | 0 | 25 (0.3%) | 5 (1.3%) | 5 (1.4%) |
+| maroon | 8 (0.3%) | 240 (4.6%) | 248 (3.1%) | 2 (0.5%) | 0 |
+| grey | 0 | 62 (1.2%) | 62 (0.8%) | 0 | 0 |
+| purple | 3 (0.1%) | 53 (1.0%) | 56 (0.7%) | 0 | 0 |
+| pink | 3 (0.1%) | 0 | 3 (0.04%) | 0 | 0 |
+
+### Number Color Distribution
+
+| Color | Train Real | Train Synth | Train Combined | Valid | Test |
+|-------|-----------|-------------|----------------|-------|------|
+| white | 1,136 (39.3%) | 2,404 (46.3%) | 3,540 (43.8%) | 145 (39.0%) | 143 (39.2%) |
+| black | 1,176 (40.7%) | 904 (17.4%) | 2,080 (25.7%) | 163 (43.8%) | 164 (44.9%) |
+| red | 465 (16.1%) | 82 (1.6%) | 547 (6.8%) | 51 (13.7%) | 46 (12.6%) |
+| yellow | 67 (2.3%) | 1,277 (24.6%) | 1,344 (16.6%) | 9 (2.4%) | 8 (2.2%) |
+| blue | 1 (0.03%) | 306 (5.9%) | 307 (3.8%) | 0 | 1 (0.3%) |
+| purple | 0 | 224 (4.3%) | 224 (2.8%) | 0 | 0 |
+| unknown | 25 (0.9%) | 0 | 25 (0.3%) | 1 (0.3%) | 2 (0.5%) |
+| green | 14 (0.5%) | 0 | 14 (0.2%) | 0 | 1 (0.3%) |
+| maroon | 5 (0.2%) | 0 | 5 (0.06%) | 3 (0.8%) | 0 |
+| grey | 1 (0.03%) | 0 | 1 (0.01%) | 0 | 0 |
+
+### Border Distribution
+
+SmolVLM2 reported `border=true` for **100% of all records** across all splits. This is almost certainly a model bias — the VLM interprets any visible digit edge as a "border". Border metadata is unreliable and should not be used for analysis or stratification.
+
+### Key Observations
+
+1. **Real data is white-jersey dominated** (53%) — matches broadcast basketball where home teams wear white. Valid and test splits mirror this distribution closely, confirming they are representative of the real data.
+
+2. **Synthetic data diversifies jersey colors** — the generation pipeline uses an NBA color palette, producing a more uniform distribution across red (19%), blue (18%), black (12%), white (13%), yellow (12%), green (9%), orange (9%). This is by design — rare classes got synthetic data with varied jersey colors.
+
+3. **Number color mismatch between real and synthetic**: Real data is dominated by black (41%) and white (39%) number colors. Synthetic data over-represents yellow (25%) and blue (6%) numbers. This is because the synthetic renderer picks contrasting text colors against jersey backgrounds, producing color combinations not common in real basketball (e.g., yellow numbers on blue jerseys).
+
+4. **Colors absent from val/test**: green, orange, grey, purple jersey colors appear in training (via synthetic) but have zero representation in valid/test. This means the model learns to recognize numbers on these jersey colors but isn't evaluated on them — the val accuracy may undercount the benefit of color diversity.
+
+5. **Navy is only in real data** (25 train, 5 valid, 5 test) — the synthetic pipeline didn't generate navy jerseys (used "blue" instead). Navy vs blue distinction may confuse SmolVLM2.
+
+### Distribution Comparison: Train vs Valid/Test
+
+The real training data distribution closely matches valid and test, confirming they come from the same source distribution (broadcast basketball footage). The synthetic data shifts the combined training distribution away from val/test, particularly in jersey color balance. This is acceptable because the synthetic data targets rare classes that need more samples, and the model's augmentation pipeline handles domain adaptation.
+
+### Generated Plots
+
+All plots saved to `experiments/metadata_stats/`:
+
+```
+experiments/metadata_stats/
+├── train_real/          # Real training data only (2,891 samples)
+│   ├── jersey_color_distribution.png
+│   ├── number_color_distribution.png
+│   ├── jersey_color_by_class.png    # Heatmap: which classes wear which colors
+│   ├── number_color_by_class.png    # Heatmap: number color per class
+│   ├── color_combinations.png       # Jersey x Number color matrix
+│   ├── border_distribution.png
+│   ├── border_by_class.png
+│   └── annotation_coverage.png
+├── train_synth/         # Synthetic training data only (5,197 samples)
+│   └── ... (same plot set)
+├── train_combined/      # Real + Synthetic combined (8,088 samples)
+│   └── ... (same plot set)
+├── valid/               # Validation split (372 samples)
+│   └── ... (same plot set)
+└── test/                # Test split (365 samples)
+    └── ... (same plot set)
+```
+
+### GCP Jobs
+
+| Split | Job ID | Samples Annotated |
+|-------|--------|-------------------|
+| train | (previous session) | 2,891 real + 5,197 synthetic |
+| valid | `8572867491477323776` | 372 |
+| test | `943769722711703552` | 365 |
+
+---
+
 ## Conclusions
 
 1. **ResNet18 with label smoothing + synthetic data remains the best model** at 96.2% val top-1. It's also 42x smaller, 200x faster at inference, cheaper to train, and deployable on edge devices via ONNX.
@@ -711,24 +820,7 @@ models/smolvlm2-lora/last.ckpt  (1.8 GiB)
 - **GCS Bucket**: `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/`
 - **Vertex AI Region**: `us-east1`
 - **Docker Image**: `us-docker.pkg.dev/api-project-562713517696/classifier-training/classifier-training:latest`
-- **Dates**: 2026-02-20 (Phases 1-8), 2026-02-21 (Phases 9-10), 2026-02-24/25 (Phase 11)
-
-## How to Recover Artifacts
-
-- **Repository**: classifier-training (GitHub: ortizeg/classifier-training)
-- **Transform configs**: `src/classifier_training/conf/transforms/basketball_jersey_*.yaml`
-- **Custom transforms**: `src/classifier_training/transforms/degradation.py`
-  - `RandomJPEGCompression` — PIL encode/decode round-trip
-  - `RandomPixelate` — NEAREST downscale + upscale
-  - `RandomBilinearDownscale` — BILINEAR downscale + upscale
-  - `RandomGaussianNoise` — additive Gaussian noise (0-255 scale)
-  - `RandomZoomOut` — canvas padding + resize (simulates loose bbox)
-  - `RandomZoomIn` — crop + resize up (simulates tight bbox)
-- **GCP Project**: `api-project-562713517696`
-- **GCS Bucket**: `gs://deep-ego-model-training/ego-training-data/classifier-training/logs/`
-- **Vertex AI Region**: `us-east1`
-- **Docker Image**: `us-docker.pkg.dev/api-project-562713517696/classifier-training/classifier-training:latest`
-- **Date**: 2026-02-20 (Phases 1-6)
+- **Dates**: 2026-02-20 (Phases 1-8), 2026-02-21 (Phases 9-10), 2026-02-24/25 (Phase 11), 2026-02-25 (Phase 12)
 
 ## How to Recover Artifacts
 
