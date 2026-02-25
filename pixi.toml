@@ -7,7 +7,10 @@ channels = ["conda-forge"]
 platforms = ["osx-arm64", "linux-64"]
 
 [system-requirements]
-cuda = "12.1"
+cuda = "12.9"
+
+[target.linux-64.dependencies]
+cuda-version = "12.*"
 
 [tasks]
 test = "pytest"
